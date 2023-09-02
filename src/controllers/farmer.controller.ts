@@ -3,6 +3,7 @@ import {farmerModel, userModel} from "../models"
 import {IFarmer} from "../types/farmer"
 import {currentUser, generateFarmerID, getUserId, getUserRole} from "../utils"
 import mongoose from "mongoose"
+import imageUpload from "../utils/file-upload"
 
 async function fileUpload(file: any) {
   const filepath = `uploads/${Date.now() + "_" + file?.name}`
@@ -20,6 +21,7 @@ export const createFarmer = async (req: Request, res: Response) => {
   const id_card = req.files?.id_card
   const guarantor_id = req.files?.guarantor_id
 
+  const env = process.env.NODE_ENV
   try {
     const {
       name,
@@ -81,9 +83,18 @@ export const createFarmer = async (req: Request, res: Response) => {
       ...req.body,
       farmer_id: await generateFarmerID(),
       name: name.toLowerCase(),
-      profile_img: profile_img && (await fileUpload(profile_img)),
-      id_card: await fileUpload(id_card),
-      guarantor_id: await fileUpload(guarantor_id),
+      profile_img:
+        profile_img && env === "production"
+          ? await imageUpload(profile_img)
+          : await fileUpload(profile_img),
+      id_card:
+        env === "production"
+          ? await imageUpload(id_card)
+          : await fileUpload(id_card),
+      guarantor_id:
+        env === "production"
+          ? await imageUpload(guarantor_id)
+          : await fileUpload(guarantor_id),
       guarantor_name: guarantor_name.toLowerCase(),
       field_officer: user?._id,
       supervisor: user?.supervisor,
