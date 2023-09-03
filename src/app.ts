@@ -26,7 +26,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "http://192.168.43.69:19000",
-      "*",
+      "https://puregreen-agrochemicals.onrender.com",
     ],
     credentials: true,
   })
