@@ -36,7 +36,7 @@ export const login = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .cookie("token", token, {httpOnly: true, maxAge: 86400000})
+      .cookie("token", token, {httpOnly: true, secure: true, maxAge: 86400000})
       .send({error: false, message: "Login successfully", token})
   } catch (error: any) {
     return res.send({error: true, message: error?.message})
@@ -71,7 +71,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
         await newOtp.save()
         return res
           .status(200)
-          .cookie("user", email, {httpOnly: true, maxAge: 86400000})
+          .cookie("user", email, {
+            httpOnly: true,
+            secure: true,
+            maxAge: 86400000,
+          })
           .send({error: false, message: "OTP has been sent"})
       })
       .catch((error) => res.send({error: true, message: error?.message}))
@@ -177,7 +181,7 @@ export const logout = async (req: Request, res: Response) => {
   try {
     return res
       .status(200)
-      .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+      .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
       .send({error: false, message: "Logout successfully"})
   } catch (error: any) {
     return res.send({error: true, message: error?.message})

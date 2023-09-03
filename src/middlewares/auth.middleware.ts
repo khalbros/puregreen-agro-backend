@@ -12,7 +12,7 @@ export const isLoggedIn = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -20,7 +20,7 @@ export const isLoggedIn = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     next()
@@ -39,7 +39,7 @@ export const isSuperAdmin = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -47,7 +47,7 @@ export const isSuperAdmin = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if ((verify as IVerifedToken).role !== "SUPER ADMIN") {
@@ -69,7 +69,7 @@ export const isAdmin = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -77,7 +77,7 @@ export const isAdmin = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if ((verify as IVerifedToken).role !== "ADMIN") {
@@ -99,7 +99,7 @@ export const isWarehouseManager = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -107,7 +107,7 @@ export const isWarehouseManager = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if ((verify as IVerifedToken).role !== "WAREHOUSE MANAGER") {
@@ -129,7 +129,7 @@ export const isSupervisor = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -137,7 +137,7 @@ export const isSupervisor = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if ((verify as IVerifedToken).role !== "SUPERVISOR") {
@@ -159,7 +159,7 @@ export const isFieldOfficer = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -167,7 +167,7 @@ export const isFieldOfficer = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if ((verify as IVerifedToken).role !== "FIELD OFFICER") {
@@ -189,7 +189,7 @@ export const isSuperAdminOrAdmin = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -197,7 +197,7 @@ export const isSuperAdminOrAdmin = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if (
@@ -225,7 +225,7 @@ export const isSupervisorOrFieldOfficer = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -233,20 +233,17 @@ export const isSupervisorOrFieldOfficer = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if (
       (verify as IVerifedToken).role !== "SUPERVISOR" &&
       (verify as IVerifedToken).role !== "FIELD OFFICER"
     ) {
-      return res
-        .status(403)
-        .send({
-          error: true,
-          message:
-            "Access Denied! (only supervisors and field officer allowed)",
-        })
+      return res.status(403).send({
+        error: true,
+        message: "Access Denied! (only supervisors and field officer allowed)",
+      })
     }
     next()
   } catch (error: any) {
@@ -264,7 +261,7 @@ export const isSupervisorOrWarehouseManager = async (
     if (!token) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "Not Login"})
     }
     const verify = jwt.verify(token, process.env.JWT_SECRET!)
@@ -272,7 +269,7 @@ export const isSupervisorOrWarehouseManager = async (
     if (!verify) {
       return res
         .status(401)
-        .cookie("token", undefined, {httpOnly: true, maxAge: 0})
+        .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
     if (
