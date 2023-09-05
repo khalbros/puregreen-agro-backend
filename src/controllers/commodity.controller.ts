@@ -1,8 +1,12 @@
 import {Request, Response} from "express"
-import {commodityModel, warehouseModel} from "../models"
+import {
+  commodityModel,
+  dispatchModel,
+  userModel,
+  warehouseModel,
+} from "../models"
 import {ICommodity} from "../types/commodity"
-import {getUserRole} from "../utils"
-import {populate} from "dotenv"
+import {getUserId, getUserRole} from "../utils"
 
 export const createCommodity = async (req: Request, res: Response) => {
   try {
@@ -238,6 +242,67 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
     return res
       .status(200)
       .send({error: false, message: "Success", data: commodities})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+// counts
+export const countCommoditiesReceived = async (req: Request, res: Response) => {
+  const userId = await getUserId(req, res)
+  const user = await userModel.findById(userId)
+  if (!user) {
+    return res.status(404).send({
+      error: true,
+      message: "User not found",
+    })
+  }
+  try {
+    const dispatchs = await dispatchModel.find({warehouse: user?.warehouse})
+    if (!dispatchs) {
+      return res.status(404).send({
+        error: true,
+        message: "Dispatch not found",
+      })
+    }
+    const weight = dispatchs.reduce(
+      (total, d) => total + Number(d.gross_weight),
+      0
+    )
+    const bags = dispatchs.reduce((total, d) => total + Number(d.num_bags), 0)
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: {weight, bags}})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countCommoditiesOut = async (req: Request, res: Response) => {
+  const userId = await getUserId(req, res)
+  const user = await userModel.findById(userId)
+  if (!user) {
+    return res.status(404).send({
+      error: true,
+      message: "User not found",
+    })
+  }
+  try {
+    const dispatchs = await dispatchModel.find({createdBy: user?._id})
+    if (!dispatchs) {
+      return res.status(404).send({
+        error: true,
+        message: "Dispatch not found",
+      })
+    }
+    const weight = dispatchs.reduce(
+      (total, d) => total + Number(d.gross_weight),
+      0
+    )
+    const bags = dispatchs.reduce((total, d) => total + Number(d.num_bags), 0)
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: {weight, bags}})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

@@ -122,6 +122,46 @@ export const getAllDispatches = async (req: Request, res: Response) => {
   }
   const {type} = req.query
   try {
+    if (user.role === "SUPER ADMIN" || user.role === "ADMIN") {
+      if (type && type != "") {
+        const dispatchs = await dispatchModel
+          .find({
+            type,
+          })
+          .sort({createdAt: -1})
+          .populate("warehouse")
+          .populate("client")
+          .populate("commodity")
+          .populate({path: "commodity", populate: {path: "grade"}})
+          .populate("createdBy")
+        if (!dispatchs) {
+          return res.status(404).send({
+            error: true,
+            message: "Dispatch not found",
+          })
+        }
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: dispatchs})
+      }
+      const dispatchs = await dispatchModel
+        .find()
+        .sort({createdAt: -1})
+        .populate("warehouse")
+        .populate("client")
+        .populate("commodity")
+        .populate({path: "commodity", populate: {path: "grade"}})
+        .populate("createdBy")
+      if (!dispatchs) {
+        return res.status(404).send({
+          error: true,
+          message: "Dispatch not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: dispatchs})
+    }
     if (type && type != "") {
       const dispatchs = await dispatchModel
         .find({
@@ -145,51 +185,7 @@ export const getAllDispatches = async (req: Request, res: Response) => {
         .send({error: false, message: "Success", data: dispatchs})
     }
     const dispatchs = await dispatchModel
-      .find({createdBy: userId})
-      .sort({createdAt: -1})
-      .populate("warehouse")
-      .populate("client")
-      .populate("commodity")
-      .populate({path: "commodity", populate: {path: "grade"}})
-      .populate("createdBy")
-    if (!dispatchs) {
-      return res.status(404).send({
-        error: true,
-        message: "Dispatch not found",
-      })
-    }
-    return res
-      .status(200)
-      .send({error: false, message: "Success", data: dispatchs})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
-  }
-}
-
-export const getAllDispatchs = async (req: Request, res: Response) => {
-  const {type} = req.query
-  try {
-    if (type && type != "") {
-      const dispatchs = await dispatchModel
-        .find({type})
-        .sort({createdAt: -1})
-        .populate("warehouse")
-        .populate("client")
-        .populate("commodity")
-        .populate({path: "commodity", populate: {path: "grade"}})
-        .populate("createdBy")
-      if (!dispatchs) {
-        return res.status(404).send({
-          error: true,
-          message: "Dispatch not found",
-        })
-      }
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: dispatchs})
-    }
-    const dispatchs = await dispatchModel
-      .find()
+      .find({$or: [{warehouse: user?.warehouse}, {createdBy: user._id}]})
       .sort({createdAt: -1})
       .populate("warehouse")
       .populate("client")
@@ -338,6 +334,7 @@ export const approveDispatch = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Dispatch updated", data: dispatch})
     }
+
     let dispatch_for
 
     if (dispatch.type === "Inter warehouse") {
@@ -349,9 +346,15 @@ export const approveDispatch = async (req: Request, res: Response) => {
       dispatch_for = client?.name
     }
     const targetSocket = activeSockets[String(dispatch.createdBy)]
+    const message = await messageModel.create({
+      from: await getUserId(req, res),
+      to: dispatch?.createdBy,
+      message: `Dispatch for ${dispatch_for} is REJECTED`,
+    })
+    await message.save()
     if (targetSocket) {
       targetSocket.emit("dispatch-treated", {
-        message: `Dispatch REJECTED for ${dispatch_for}`,
+        message: `Dispatch for ${dispatch_for} is REJECTED`,
       })
     }
     return res
@@ -412,7 +415,6 @@ export const veriifyDispatch = async (req: Request, res: Response) => {
     await otpModel.findOneAndDelete({dispatch_id: id})
 
     if (dispatch.type === "Trading") {
-      dispatch.status = "COMPLETED"
       const warehouse = await warehouseModel.findOne({
         warehouse_manager: dispatch.createdBy,
       })
@@ -428,18 +430,22 @@ export const veriifyDispatch = async (req: Request, res: Response) => {
           if (commodity.commodity === dispatch.commodity) {
             commodity.quantity =
               Number(commodity.quantity) - Number(dispatch.num_bags)
+            commodity.weight =
+              Number(commodity.weight) - Number(dispatch.gross_weight)
           } else {
             commodity
           }
         }) as never
-        warehouse.save()
+        await warehouse.save()
       } else {
         warehouse.commodities.push({
           commodity: dispatch.commodity,
           quantity: dispatch.num_bags as number,
+          weight: Number(dispatch.gross_weight),
         })
         warehouse.save()
       }
+      dispatch.status = "COMPLETED"
     }
 
     return res
@@ -479,6 +485,8 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           if (commodity.commodity === dispatch.commodity) {
             commodity.quantity =
               Number(commodity.quantity) - Number(dispatch.num_bags)
+            commodity.weight =
+              Number(commodity.weight) - Number(dispatch.gross_weight)
           }
         })
       senderWarehouse?.save()
@@ -496,6 +504,8 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           if (commodity.commodity === dispatch.commodity) {
             commodity.quantity =
               Number(commodity.quantity) + Number(dispatch.num_bags)
+            commodity.weight =
+              Number(commodity.weight) + Number(dispatch.gross_weight)
           } else {
             commodity
           }
@@ -505,6 +515,7 @@ export const confirmDispatch = async (req: Request, res: Response) => {
         receiverWarehouse?.commodities.push({
           commodity: dispatch.commodity,
           quantity: dispatch.num_bags as number,
+          weight: Number(dispatch.gross_weight),
         })
         receiverWarehouse?.save()
       }
@@ -514,23 +525,5 @@ export const confirmDispatch = async (req: Request, res: Response) => {
       .send({error: false, message: "Dispatch updated", data: dispatch})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
-  }
-}
-
-// counts
-
-export const totalCommoditiesDispatch = async (req: Request, res: Response) => {
-  const userId = await getUserId(req, res)
-  const user = await userModel.findById(userId)
-  if (!user) {
-    return res.status(404).send({
-      error: true,
-      message: "User not found",
-    })
-  }
-
-  try {
-  } catch (error: any) {
-    return res.send({error: true, message: error?.message})
   }
 }

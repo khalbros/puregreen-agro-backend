@@ -1,5 +1,5 @@
 import {Request, Response} from "express"
-import {clientModel, transactionModel} from "../models"
+import {clientModel, transactionModel, warehouseModel} from "../models"
 import {ITransaction} from "../types/transaction"
 import {currentUser, getUserId, getUserRole} from "../utils"
 
@@ -38,7 +38,7 @@ export const createTransaction = async (req: Request, res: Response) => {
     if (type === "Storage" && !duration) {
       return res.status(400).send({
         error: true,
-        message: "transactions error (some fields are empty / invalid)",
+        message: "transactions error (duration field empty)",
       })
     }
     const clientCheck = await clientModel.findOne({client_id: client})
@@ -57,7 +57,45 @@ export const createTransaction = async (req: Request, res: Response) => {
     newTransaction
       .save()
       .then(
-        () => {
+        async (data) => {
+          const warehouse = await warehouseModel.findOne({
+            warehouse_manager: data.createdBy,
+          })
+
+          if (!warehouse) {
+            return res.send({
+              error: true,
+              message: "Warehouse not found",
+            })
+          }
+          const comm = warehouse?.commodities.find((commodity) => {
+            commodity.commodity === data.commodity
+          })
+          if (comm) {
+            warehouse.commodities = warehouse?.commodities.map((commodity) => {
+              if (commodity.commodity === data.commodity) {
+                commodity.quantity =
+                  Number(commodity.quantity) + Number(data.num_bags)
+                commodity.weight
+                  ? (commodity.weight =
+                      Number(commodity.weight) + Number(data.gross_weight))
+                  : (commodity = {
+                      ...commodity,
+                      weight: Number(data.gross_weight),
+                    })
+              } else {
+                commodity
+              }
+            }) as never
+            await warehouse.save()
+          } else {
+            warehouse.commodities.push({
+              commodity: data.commodity,
+              quantity: Number(data.num_bags),
+              weight: Number(data.gross_weight),
+            })
+            await warehouse.save()
+          }
           return res
             .status(201)
             .send({error: false, message: "transaction created successfully"})

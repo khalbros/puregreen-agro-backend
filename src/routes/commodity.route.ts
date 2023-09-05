@@ -1,5 +1,7 @@
 import {Router} from "express"
 import {
+  countCommoditiesOut,
+  countCommoditiesReceived,
   createCommodity,
   deleteCommodity,
   getAllApprovedCommodities,
@@ -13,6 +15,7 @@ import {
   isLoggedIn,
   isSuperAdmin,
   isSuperAdminOrAdmin,
+  isWarehouseManager,
 } from "../middlewares/auth.middleware"
 
 const router: Router = Router()
@@ -24,5 +27,7 @@ router.get("/:id", isLoggedIn, getCommodity)
 router.get("/warehouse/:id", isLoggedIn, getCommodityByWarehouse)
 router.patch("/:id", isSuperAdminOrAdmin, updateCommodity)
 router.delete("/:id", isSuperAdmin, deleteCommodity)
+router.get("/count/received", isWarehouseManager, countCommoditiesReceived)
+router.get("/count/sent", isWarehouseManager, countCommoditiesOut)
 
 export default router

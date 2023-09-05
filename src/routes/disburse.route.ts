@@ -10,6 +10,7 @@ import {
   countOutstandinLoan,
   countRecoveredLoan,
   countLoanDisburse,
+  countRecoveredNetWeight,
 } from "../controllers/disburse.controller"
 import {
   isFieldOfficer,
@@ -28,8 +29,9 @@ router.get("/:id", isLoggedIn, getDisbursement)
 router.patch("/:id", isSupervisorOrWarehouseManager, updateDisbursement)
 router.delete("/:id", isSupervisor, deleteDisbursement)
 router.get("/count/loan-disburse", isLoggedIn, countLoanDisburse)
-router.get("/count/total-hectares", isLoggedIn, countDisburseHectares)
-router.get("/count/total-outstanding", isLoggedIn, countOutstandinLoan)
-router.get("/count/total-recovered", isLoggedIn, countRecoveredLoan)
+router.get("/count/hectares-disburse", isLoggedIn, countDisburseHectares)
+router.get("/count/outstanding-loan", isLoggedIn, countOutstandinLoan)
+router.get("/count/recovered-loan", isLoggedIn, countRecoveredLoan)
+router.get("/count/recovered-netweight", isLoggedIn, countRecoveredNetWeight)
 
 export default router

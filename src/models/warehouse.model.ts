@@ -37,6 +37,7 @@ const warehouseSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "Commodity",
         },
+        weight: {type: Number, required: true},
         quantity: {type: Number, required: true},
       },
     ],
