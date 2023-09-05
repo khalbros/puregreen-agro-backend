@@ -40,7 +40,7 @@ export const login = async (req: Request, res: Response) => {
         httpOnly: true,
         secure: true,
         maxAge: 86400000,
-        sameSite: "strict",
+        sameSite: "none",
       })
       .send({error: false, message: "Login successfully", token})
   } catch (error: any) {
@@ -80,7 +80,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
             httpOnly: true,
             secure: true,
             maxAge: 86400000,
-            sameSite: "strict",
+            sameSite: "none",
           })
           .send({error: false, message: "OTP has been sent"})
       })
@@ -191,7 +191,7 @@ export const logout = async (req: Request, res: Response) => {
         httpOnly: true,
         secure: true,
         maxAge: 0,
-        sameSite: "strict",
+        sameSite: "none",
       })
       .send({error: false, message: "Logout successfully"})
   } catch (error: any) {
