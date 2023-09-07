@@ -99,6 +99,7 @@ export const getAllApprovedCommodities = async (
       const commodities = await commodityModel
         .find({type, isApproved: true})
         .populate("grade")
+        .sort({createAt: -1})
       if (!commodities) {
         return res.status(404).send({
           error: true,
@@ -112,6 +113,7 @@ export const getAllApprovedCommodities = async (
     const commodities = await commodityModel
       .find({isApproved: true})
       .populate("grade")
+      .sort({createAt: -1})
     if (!commodities) {
       return res.status(404).send({
         error: true,
@@ -125,11 +127,15 @@ export const getAllApprovedCommodities = async (
     res.send({error: true, message: error?.message})
   }
 }
+
 export const getAllCommodities = async (req: Request, res: Response) => {
   try {
     const {type} = req.query
     if (type != "" && type) {
-      const commodities = await commodityModel.find({type}).populate("grade")
+      const commodities = await commodityModel
+        .find({type})
+        .populate("grade")
+        .sort({createAt: -1})
       if (!commodities) {
         return res.status(404).send({
           error: true,
@@ -140,7 +146,10 @@ export const getAllCommodities = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: commodities})
     }
-    const commodities = await commodityModel.find().populate("grade")
+    const commodities = await commodityModel
+      .find()
+      .populate("grade")
+      .sort({createAt: -1})
     if (!commodities) {
       return res.status(404).send({
         error: true,
@@ -171,6 +180,7 @@ export const updateCommodity = async (req: Request, res: Response) => {
         runValidators: true,
       })
       .populate("grade")
+      .sort({createAt: -1})
     if (!commodity) {
       return res.status(404).send({
         error: true,
@@ -230,6 +240,7 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
       .populate("supervisors")
       .populate("commodities.commodity")
       .populate({path: "commodities.commodity", populate: {path: "grade"}})
+      .sort({createAt: -1})
 
     if (!warehouse) {
       return res.status(404).send({
