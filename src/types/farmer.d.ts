@@ -23,6 +23,7 @@ export interface IFarmer {
   guarantor_id_number: string
   guarantor_id: string
   guarantor_address: string
+  profile_img: string
   field_officer?: string
   supervisor?: string
   isApproved?: boolean

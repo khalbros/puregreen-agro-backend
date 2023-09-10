@@ -4,8 +4,9 @@ import {IFarmer} from "../types/farmer"
 import {currentUser, generateFarmerID, getUserId, getUserRole} from "../utils"
 import mongoose from "mongoose"
 import imageUpload from "../utils/file-upload"
+import {UploadedFile} from "express-fileupload"
 
-async function fileUpload(file: any) {
+async function fileUpload(file: UploadedFile) {
   const filepath = `uploads/${Date.now() + "_" + file?.name}`
   file.mv(filepath, (err: any) => {
     if (err) {
@@ -17,11 +18,13 @@ async function fileUpload(file: any) {
 }
 
 export const createFarmer = async (req: Request, res: Response) => {
-  const profile_img = req.files?.profile_img
-  const id_card = req.files?.id_card
-  const guarantor_id = req.files?.guarantor_id
+  // const profile_img = req.files?.profile_img
+  // const id_card = req.files?.id_card
+  // const guarantor_id = req.files?.guarantor_id
 
   const env = process.env.NODE_ENV
+  console.log(req.body)
+
   try {
     const {
       name,
@@ -42,6 +45,9 @@ export const createFarmer = async (req: Request, res: Response) => {
       guarantor_id_type,
       guarantor_id_number,
       guarantor_address,
+      id_card,
+      guarantor_id,
+      profile_img,
     }: IFarmer = req.body
 
     if (
@@ -63,6 +69,7 @@ export const createFarmer = async (req: Request, res: Response) => {
       !cooperative ||
       !id_card ||
       !guarantor_id ||
+      !profile_img ||
       !role
     ) {
       return res.status(400).send({
@@ -83,18 +90,9 @@ export const createFarmer = async (req: Request, res: Response) => {
       ...req.body,
       farmer_id: await generateFarmerID(),
       name: name.toLowerCase(),
-      profile_img:
-        profile_img && env === "production"
-          ? await imageUpload(profile_img)
-          : await fileUpload(profile_img),
-      id_card:
-        env === "production"
-          ? await imageUpload(id_card)
-          : await fileUpload(id_card),
-      guarantor_id:
-        env === "production"
-          ? await imageUpload(guarantor_id)
-          : await fileUpload(guarantor_id),
+      profile_img: profile_img && (await imageUpload(profile_img)),
+      id_card: await imageUpload(id_card),
+      guarantor_id: await imageUpload(guarantor_id),
       guarantor_name: guarantor_name.toLowerCase(),
       field_officer: user?._id,
       supervisor: user?.supervisor,
