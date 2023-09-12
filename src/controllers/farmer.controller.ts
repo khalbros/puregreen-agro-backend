@@ -23,8 +23,6 @@ export const createFarmer = async (req: Request, res: Response) => {
   // const guarantor_id = req.files?.guarantor_id
 
   const env = process.env.NODE_ENV
-  console.log(req.body)
-
   try {
     const {
       name,

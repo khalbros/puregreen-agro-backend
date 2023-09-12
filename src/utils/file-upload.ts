@@ -14,7 +14,6 @@ export default async function imageUpload(file: any): Promise<string> {
         file,
         {
           folder: "puregreen-agro",
-          resource_type: "image",
           invalidate: true,
           overwrite: true,
         },
