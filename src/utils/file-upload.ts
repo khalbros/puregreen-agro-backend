@@ -13,7 +13,6 @@ export default async function imageUpload(file: any): Promise<string> {
       const result = cloudinary.uploader.upload(
         file,
         {
-          allowed_formats: ["jpg", "png"],
           folder: "puregreen-agro",
           resource_type: "image",
           invalidate: true,
