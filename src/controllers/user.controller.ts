@@ -4,6 +4,7 @@ import {IUser} from "../types/user"
 import bcryptjs from "bcryptjs"
 import {currentUser, getUserId, getUserRole} from "../utils"
 import mongoose from "mongoose"
+import imageUpload from "../utils/file-upload"
 
 export const createUser = async (req: Request, res: Response) => {
   try {
@@ -28,6 +29,7 @@ export const createUser = async (req: Request, res: Response) => {
       gender,
       warehouse,
       supervisor,
+      profile_img,
     }: IUser = req.body
 
     if (!name || !email || !phone || !password || !gender || !role) {
@@ -53,6 +55,7 @@ export const createUser = async (req: Request, res: Response) => {
       name: name.toLowerCase(),
       email: email.toLowerCase(),
       password: passwordHash,
+      profile_img: profile_img && imageUpload(profile_img),
     })
 
     if (role === "WAREHOUSE MANAGER") {

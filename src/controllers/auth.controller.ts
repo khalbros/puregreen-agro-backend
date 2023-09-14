@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken"
 import bcryptjs from "bcryptjs"
 import {userModel} from "../models"
 import {IUser} from "../types/user"
-import {sendMail} from "../utils/send-mail"
+import {sendEmail} from "../utils/send-mail"
 import {otpModel} from "../models/Otp.model"
 import {getUserId} from "../utils"
 
@@ -66,8 +66,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const otp = await bcryptjs.hash(String(randomNumber), 12)
 
-    sendMail(email, "Password reset OTP", `Your verification code is: ${otp}`)
-      .then(async (result) => {
+    sendEmail({
+      to: email,
+      subject: "PASSWORD RESET",
+      message: `Your verification code is: <h3>${otp}<h3/>`,
+    })
+      .then(async (result: any) => {
         const newOtp = await otpModel.create({
           otp,
           user_email: email,
@@ -84,7 +88,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
           })
           .send({error: false, message: "OTP has been sent"})
       })
-      .catch((error) => res.send({error: true, message: error?.message}))
+      .catch((error: any) => res.send({error: true, message: error?.message}))
   } catch (error: any) {
     return res.send({error: true, message: error?.message})
   }

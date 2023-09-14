@@ -1,16 +1,11 @@
 import {Request, Response} from "express"
-import {
-  clientModel,
-  dispatchModel,
-  messageModel,
-  userModel,
-  warehouseModel,
-} from "../models"
+import {clientModel, dispatchModel, userModel, warehouseModel} from "../models"
 import {IDispatch} from "../types/dispatch"
-import {generateOTP, getUserId, getUserRole} from "../utils"
+import {currentUser, generateOTP, getUserId, getUserRole} from "../utils"
 import bcryptjs from "bcryptjs"
 import {otpModel} from "../models/Otp.model"
 import {activeSockets} from ".."
+import {sendEmail} from "../utils/send-mail"
 
 export const createDispatch = async (req: Request, res: Response) => {
   try {
@@ -266,6 +261,7 @@ export const deleteDispatch = async (req: Request, res: Response) => {
 //  actions
 
 export const approveDispatch = async (req: Request, res: Response) => {
+  const currentuser = await currentUser(req, res)
   try {
     const {id} = req.params
     const {isApproved}: IDispatch = req.body
@@ -318,12 +314,16 @@ export const approveDispatch = async (req: Request, res: Response) => {
       }
       await newOtp.save()
       const targetSocket = activeSockets[String(dispatch.createdBy)]
-      const message = await messageModel.create({
-        from: await getUserId(req, res),
-        to: dispatch?.createdBy,
-        message: `Dispatch APPROVED for ${dispatch_for} and your OTP is: ${otp}`,
-      })
-      await message.save()
+
+      const mailTO = await userModel.findById(dispatch.createdBy)
+      if (mailTO) {
+        await sendEmail({
+          to: mailTO.email as string,
+          subject: "DISPATCH APPROVED",
+          message: `<p>Your Dispatch for <h4>${dispatch_for}</h4> has been Approved</p><p>please use this code: <h3>${otp}</h3> to complete your dispatch<p/>`,
+        })
+      }
+
       if (targetSocket) {
         targetSocket.emit("dispatch-treated", {
           message: `Dispatch APPROVED for ${dispatch_for}`,
@@ -346,15 +346,19 @@ export const approveDispatch = async (req: Request, res: Response) => {
       dispatch_for = client?.name
     }
     const targetSocket = activeSockets[String(dispatch.createdBy)]
-    const message = await messageModel.create({
-      from: await getUserId(req, res),
-      to: dispatch?.createdBy,
-      message: `Dispatch for ${dispatch_for} is REJECTED`,
-    })
-    await message.save()
+
+    const mailTO = await userModel.findById(dispatch.createdBy)
+    if (mailTO) {
+      await sendEmail({
+        to: mailTO.email as string,
+        subject: "DISPATCH APPROVED",
+        message: `<p>Your Dispatch for <h4>${dispatch_for}</h4> has been Rejected</p><p>please contact admin <h3>${currentuser?.name}</h3> for more informantion<p/>`,
+      })
+    }
+
     if (targetSocket) {
       targetSocket.emit("dispatch-treated", {
-        message: `Dispatch for ${dispatch_for} is REJECTED`,
+        message: `Dispatch for ${dispatch_for} has been REJECTED`,
       })
     }
     return res

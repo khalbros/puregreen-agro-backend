@@ -2,8 +2,7 @@ import {Request, Response} from "express"
 import {farmerModel, visitationModel} from "../models"
 import {IVisitation} from "../types/visitation"
 import {currentUser, getUserId, getUserRole} from "../utils"
-import {aborted} from "util"
-import mongoose from "mongoose"
+import imageUpload from "../utils/file-upload"
 
 async function fileUpload(file: any) {
   const filepath = `uploads/${Date.now() + "_" + file?.name}`
@@ -22,7 +21,6 @@ async function fileUpload(file: any) {
 
 export const createVisitation = async (req: Request, res: Response) => {
   try {
-    const upload = req.files?.upload
     const {
       farmer_id,
       visitation_count,
@@ -30,6 +28,7 @@ export const createVisitation = async (req: Request, res: Response) => {
       havest_date,
       commodity,
       comment,
+      upload,
     }: IVisitation = req.body
 
     if (
@@ -38,7 +37,8 @@ export const createVisitation = async (req: Request, res: Response) => {
       !farm_location ||
       !havest_date ||
       !commodity ||
-      !comment
+      !comment ||
+      !upload
     ) {
       return res.status(400).send({
         error: true,
@@ -62,7 +62,7 @@ export const createVisitation = async (req: Request, res: Response) => {
       havest_date,
       commodity: comm,
       comment,
-      upload: await fileUpload(upload),
+      upload: await imageUpload(upload),
       visited_by: userId,
     })
     if (!newVisitation) {
