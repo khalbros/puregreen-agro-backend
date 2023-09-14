@@ -41,7 +41,7 @@ export const createDispatch = async (req: Request, res: Response) => {
     }
 
     const selectedClient = await clientModel.findOne({client_id: client})
-    if (!selectedClient) {
+    if (client && !selectedClient) {
       return res.status(400).send({
         error: true,
         message: "error invalid client",
@@ -49,7 +49,7 @@ export const createDispatch = async (req: Request, res: Response) => {
     }
     const newDispatch = await dispatchModel.create({
       ...req.body,
-      client: client && selectedClient._id,
+      client: client && selectedClient?._id,
       createdBy: await getUserId(req, res),
     })
 
