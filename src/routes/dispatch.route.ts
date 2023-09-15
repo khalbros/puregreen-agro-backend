@@ -18,7 +18,7 @@ import {
 const router: Router = Router()
 
 router.post("/", isWarehouseManager, createDispatch)
-router.get("/", isWarehouseManager, getAllDispatches)
+router.get("/", isLoggedIn, getAllDispatches)
 router.get("/:id", isLoggedIn, getDispatch)
 router.patch("/:id", isLoggedIn, updateDispatch)
 router.patch("/approve/:id", isSuperAdmin, approveDispatch)
