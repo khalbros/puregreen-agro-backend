@@ -449,7 +449,14 @@ export const veriifyDispatch = async (req: Request, res: Response) => {
         })
         warehouse.save()
       }
-      dispatch.status = "COMPLETED"
+      await dispatchModel.findByIdAndUpdate(
+        id,
+        {status: "COMPLETED"},
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
     }
 
     return res
