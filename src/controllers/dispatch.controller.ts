@@ -6,6 +6,7 @@ import bcryptjs from "bcryptjs"
 import {otpModel} from "../models/Otp.model"
 import {activeSockets} from ".."
 import {sendEmail} from "../utils/send-mail"
+import mongoose from "mongoose"
 
 export const createDispatch = async (req: Request, res: Response) => {
   try {
@@ -426,29 +427,20 @@ export const veriifyDispatch = async (req: Request, res: Response) => {
       if (!warehouse) {
         return res.send({error: true, message: "Dispatch Warehouse not found"})
       }
-      const comm = warehouse?.commodities.find((commodity) => {
-        commodity.commodity === dispatch.commodity
-      })
-      if (comm) {
-        warehouse.commodities = warehouse?.commodities.map((commodity) => {
-          if (commodity.commodity === dispatch.commodity) {
-            commodity.quantity =
-              Number(commodity.quantity) - Number(dispatch.num_bags)
-            commodity.weight =
-              Number(commodity.weight) - Number(dispatch.gross_weight)
-          } else {
-            commodity
-          }
-        }) as never
-        await warehouse.save()
-      } else {
-        warehouse.commodities.push({
-          commodity: dispatch.commodity,
-          quantity: dispatch.num_bags as number,
-          weight: Number(dispatch.gross_weight),
-        })
-        warehouse.save()
-      }
+
+      warehouse.commodities = warehouse?.commodities.map((commodity) => {
+        if (String(commodity.commodity) === String(dispatch.commodity)) {
+          commodity.quantity =
+            Number(commodity.quantity) - Number(dispatch.num_bags)
+          commodity.weight =
+            Number(commodity.weight) - Number(dispatch.gross_weight)
+          return commodity
+        } else {
+          return commodity
+        }
+      }) as never
+      await warehouse.save()
+
       await dispatchModel.findByIdAndUpdate(
         id,
         {status: "COMPLETED"},
@@ -493,7 +485,7 @@ export const confirmDispatch = async (req: Request, res: Response) => {
       })
       senderWarehouse?.commodities ===
         senderWarehouse?.commodities.map((commodity) => {
-          if (commodity.commodity === dispatch.commodity) {
+          if (String(commodity.commodity) === String(dispatch.commodity)) {
             commodity.quantity =
               Number(commodity.quantity) - Number(dispatch.num_bags)
             commodity.weight =
@@ -507,12 +499,13 @@ export const confirmDispatch = async (req: Request, res: Response) => {
       )
 
       const comm = receiverWarehouse?.commodities.find(
-        (commodity) => commodity.commodity === dispatch.commodity
+        (commodity) =>
+          String(commodity.commodity) === String(dispatch.commodity)
       )
 
       if (comm) {
         receiverWarehouse?.commodities.map((commodity) => {
-          if (commodity.commodity === dispatch.commodity) {
+          if (String(commodity.commodity) === String(dispatch.commodity)) {
             commodity.quantity =
               Number(commodity.quantity) + Number(dispatch.num_bags)
             commodity.weight =
@@ -521,14 +514,14 @@ export const confirmDispatch = async (req: Request, res: Response) => {
             commodity
           }
         })
-        receiverWarehouse?.save()
+        await receiverWarehouse?.save()
       } else {
         receiverWarehouse?.commodities.push({
           commodity: dispatch.commodity,
           quantity: dispatch.num_bags as number,
           weight: Number(dispatch.gross_weight),
         })
-        receiverWarehouse?.save()
+        await receiverWarehouse?.save()
       }
     }
     return res
