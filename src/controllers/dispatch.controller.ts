@@ -6,7 +6,6 @@ import bcryptjs from "bcryptjs"
 import {otpModel} from "../models/Otp.model"
 import {activeSockets} from ".."
 import {sendEmail} from "../utils/send-mail"
-import mongoose from "mongoose"
 
 export const createDispatch = async (req: Request, res: Response) => {
   try {
@@ -527,6 +526,53 @@ export const confirmDispatch = async (req: Request, res: Response) => {
     return res
       .status(200)
       .send({error: false, message: "Dispatch updated", data: dispatch})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+// counts
+
+export const countDispatchBagsSent = async (req: Request, res: Response) => {
+  const user = await currentUser(req, res)
+  const {type} = req.query
+  try {
+    const disburse =
+      type === "Trading"
+        ? await dispatchModel.find({
+            createdBy: user?.userId,
+            type,
+          })
+        : await dispatchModel.find({
+            createdBy: user?.userId,
+            isReceived: true,
+            type,
+          })
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const bags = disburse.reduce((total, d) => total + Number(d.num_bags), 0)
+    return res.status(200).send({error: false, message: "Success", data: bags})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countDispatchBagsReceive = async (req: Request, res: Response) => {
+  const {type} = req.query
+  try {
+    const userID = await getUserId(req, res)
+    const user = await userModel.findById(userID)
+
+    const disburse = await dispatchModel.find({
+      warehouse: user?.warehouse,
+      isReceived: true,
+    })
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const bags = disburse.reduce((total, d) => total + Number(d.num_bags), 0)
+    return res.status(200).send({error: false, message: "Success", data: bags})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

@@ -258,6 +258,8 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
   }
 }
 
+// action
+
 // counts
 export const countCommoditiesReceived = async (req: Request, res: Response) => {
   const userId = await getUserId(req, res)

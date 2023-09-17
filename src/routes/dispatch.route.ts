@@ -2,6 +2,8 @@ import {Router} from "express"
 import {
   approveDispatch,
   confirmDispatch,
+  countDispatchBagsReceive,
+  countDispatchBagsSent,
   createDispatch,
   deleteDispatch,
   getAllDispatches,
@@ -25,5 +27,7 @@ router.patch("/approve/:id", isSuperAdmin, approveDispatch)
 router.patch("/verify/:id", isWarehouseManager, veriifyDispatch)
 router.patch("/confirm/:id", isWarehouseManager, confirmDispatch)
 router.delete("/:id", isWarehouseManager, deleteDispatch)
+router.get("/count/bags-sent", isWarehouseManager, countDispatchBagsSent)
+router.get("/count/bags-receive", isWarehouseManager, countDispatchBagsReceive)
 
 export default router
