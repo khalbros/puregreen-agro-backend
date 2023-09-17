@@ -178,10 +178,17 @@ export const updateUser = async (req: Request, res: Response) => {
       })
     }
 
-    const user = await userModel.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    })
+    const user = await userModel.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        profile_img: req.body.profile_img && imageUpload(req.body.profile_img),
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
     if (!user) {
       return res.status(404).send({
         error: true,
