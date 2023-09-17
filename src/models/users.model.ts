@@ -29,6 +29,10 @@ const userSchema = new Schema(
     profile_img: {
       type: String,
     },
+    address: {
+      type: String,
+      required: [true, "role is required"],
+    },
     warehouse: {
       type: Schema.Types.ObjectId,
       ref: "Warehouse",

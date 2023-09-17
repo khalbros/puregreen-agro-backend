@@ -162,7 +162,7 @@ export const updateUser = async (req: Request, res: Response) => {
     const {id} = req.params
     const currrentUserId = await getUserId(req, res)
     const user_role = await getUserRole(req, res)
-    const {role, warehouse, supervisor} = req.body
+    const {role, warehouse, supervisor, profile_img}: IUser = req.body
 
     if (!id) {
       return res.status(400).send({
@@ -182,7 +182,7 @@ export const updateUser = async (req: Request, res: Response) => {
       id,
       {
         ...req.body,
-        profile_img: req.body.profile_img && imageUpload(req.body.profile_img),
+        profile_img: profile_img && (await imageUpload(profile_img)),
       },
       {
         new: true,

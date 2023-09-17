@@ -28,6 +28,6 @@ export default async function imageUpload(file: any): Promise<string> {
       )
     })
   } catch (error) {
-    throw new Error("" + error)
+    return "" + error
   }
 }
