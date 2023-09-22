@@ -1,5 +1,6 @@
 export interface IDisburse {
   _id?: string
+  ref_id: string
   farmer: string
   bundle?: string
   hectares?: number

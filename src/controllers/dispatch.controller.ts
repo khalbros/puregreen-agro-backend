@@ -1,7 +1,13 @@
 import {Request, Response} from "express"
 import {clientModel, dispatchModel, userModel, warehouseModel} from "../models"
 import {IDispatch} from "../types/dispatch"
-import {currentUser, generateOTP, getUserId, getUserRole} from "../utils"
+import {
+  currentUser,
+  generateOTP,
+  generateRefID,
+  getUserId,
+  getUserRole,
+} from "../utils"
 import bcryptjs from "bcryptjs"
 import {otpModel} from "../models/Otp.model"
 import {activeSockets} from ".."
@@ -49,6 +55,7 @@ export const createDispatch = async (req: Request, res: Response) => {
     }
     const newDispatch = await dispatchModel.create({
       ...req.body,
+      ref_id: await generateRefID(),
       client: client && selectedClient?._id,
       createdBy: await getUserId(req, res),
     })
@@ -56,10 +63,12 @@ export const createDispatch = async (req: Request, res: Response) => {
     newDispatch
       .save()
       .then(
-        () => {
-          return res
-            .status(201)
-            .send({error: false, message: "dispatch created successfully"})
+        (result) => {
+          return res.status(201).send({
+            error: false,
+            message: "dispatch created successfully",
+            data: result,
+          })
         },
         (err) => {
           return res.send({error: true, message: err?.message})

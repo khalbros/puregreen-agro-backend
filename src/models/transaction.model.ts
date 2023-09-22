@@ -6,6 +6,9 @@ const transactionSchema = new Schema(
       type: String,
       required: true,
     },
+    ref_id: {
+      type: String,
+    },
     client: {
       type: Schema.Types.ObjectId,
       ref: "Client",

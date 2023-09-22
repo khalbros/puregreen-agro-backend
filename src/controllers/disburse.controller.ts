@@ -8,7 +8,12 @@ import {
   warehouseModel,
 } from "../models"
 import {IDisburse} from "../types/disburse"
-import {currentUser, getCurrentProject, getUserRole} from "../utils"
+import {
+  currentUser,
+  generateRefID,
+  getCurrentProject,
+  getUserRole,
+} from "../utils"
 import {getUserId} from "../utils/index"
 import mongoose from "mongoose"
 
@@ -105,17 +110,28 @@ export const loanDisbursement = async (req: Request, res: Response) => {
       repayment_amount,
       farmer: farmerCheck && farmerCheck?._id,
       disbursedBy: userID,
+      ref_id: await generateRefID(),
       project,
     })
 
     newDisbursement
       .save()
       .then(
-        (disbursement) => {
+        async (disbursement) => {
+          const disburse = await disburseModel
+            .findById(disbursement._id)
+            .populate("farmer")
+            .populate("commodities.commodity")
+            .populate({
+              path: "commodities.commodity",
+              populate: {path: "grade"},
+            })
+            .populate("bundle")
+            .populate("disbursedBy")
           return res.status(201).send({
             error: false,
             message: "disburse created successfully",
-            data: disbursement,
+            data: disburse,
           })
         },
         (err) => {
@@ -149,7 +165,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       logistics_fee,
     }: IDisburse = req.body
     let farmerID
-    console.log(req.body)
+
     if (
       !farmer ||
       !num_bags ||
@@ -168,17 +184,8 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       })
     }
 
-    const farmerCheck = await farmerModel.findOne({farmer_id: farmer})
-    if (!farmerCheck) {
-      return res.status(400).send({
-        error: true,
-        message: "error invalid farmer",
-      })
-    }
-    farmerID = farmerCheck._id
-
     const disburse = await disburseModel.findOneAndUpdate(
-      {farmer: farmerID, status: "NOT PAID"},
+      {farmer: farmer, status: "NOT PAID"},
       {
         ...req.body,
         status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
@@ -200,9 +207,11 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
 
     if (warehouse) {
       const updateCommodities = new Promise(async (resolve, rejects) => {
-        warehouse?.commodities.forEach((comm) => {
+        warehouse?.commodities?.forEach((comm) => {
           return commodities?.map((com) => {
-            if (comm.commodity === new mongoose.Types.ObjectId(com.commodity)) {
+            if (
+              comm?.commodity === new mongoose.Types.ObjectId(com.commodity)
+            ) {
               comm.quantity = comm.quantity + com.quantity
               comm.weight = comm.weight + Number(com.gross_weight)
               return comm
@@ -219,10 +228,21 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
         resolve(saved)
       })
     }
+    const disbursement = await disburseModel
+      .findById(disburse._id)
+      .populate("farmer")
+      .populate("commodities.commodity")
+      .populate({
+        path: "commodities.commodity",
+        populate: {path: "grade"},
+      })
+      .populate("bundle")
+      .populate("disbursedBy")
+      .populate("repayedBy")
     return res.status(200).send({
       error: false,
       message: "Loan repayment successful",
-      data: disburse,
+      data: disbursement,
     })
   } catch (error: any) {
     return res.send({error: true, message: error?.message})

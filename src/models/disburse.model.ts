@@ -6,6 +6,7 @@ const disburseSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Farmer",
     },
+    ref_id: {type: String},
     hectares: {
       type: Number,
       required: true,

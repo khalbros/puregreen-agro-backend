@@ -2,6 +2,7 @@ export interface ITransaction {
   _id?: string
   client: string
   type: string
+  ref_id?: string
   commodity: string
   net_weight?: string
   duration?: number

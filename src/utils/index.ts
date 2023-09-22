@@ -1,7 +1,12 @@
 import {Request, Response} from "express"
 import jwt from "jsonwebtoken"
 import {IVerifedToken} from "../types/user"
-import {clientModel, farmerModel, projectModel} from "../models"
+import {
+  clientModel,
+  farmerModel,
+  projectModel,
+  transactionModel,
+} from "../models"
 import {otpModel} from "../models/Otp.model"
 
 export const currentUser = async (req: Request, res: Response) => {
@@ -97,5 +102,25 @@ export const generateOTP = async () => {
     return Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, "0")
+  } catch (error) {}
+}
+
+export const generateRefID = async () => {
+  try {
+    const project = await getCurrentProject()
+    const year = new Date().getFullYear()
+    let randomDigits = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, "0")
+    let id = `TR-${project?.code}-${randomDigits}`
+    const idCheck = await transactionModel.find({ref_id: id})
+    while (idCheck.length > 0) {
+      randomDigits = Math.floor(Math.random() * 1000000)
+        .toString()
+        .padStart(6, "0")
+
+      id = `PGC-${year}-${randomDigits}`
+    }
+    return id
   } catch (error) {}
 }
