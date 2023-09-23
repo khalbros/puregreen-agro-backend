@@ -55,7 +55,7 @@ export const createUser = async (req: Request, res: Response) => {
       name: name.toLowerCase(),
       email: email.toLowerCase(),
       password: passwordHash,
-      profile_img: profile_img && imageUpload(profile_img),
+      profile_img: profile_img && (await imageUpload(profile_img)),
     })
 
     if (role === "WAREHOUSE MANAGER") {
@@ -136,9 +136,10 @@ export const getUser = async (req: Request, res: Response) => {
 export const getAllUsers = async (req: Request, res: Response) => {
   const queries = req.query
   try {
+    const currentUser = await getUserId(req, res)
     if (queries) {
       const users = await userModel
-        .find({...queries})
+        .find({_id: {$ne: currentUser}, ...queries})
         .populate("warehouse")
         .populate("supervisor")
         .populate("field_officers")
@@ -147,7 +148,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         .send({error: false, message: "Success", data: users})
     }
     const users = await userModel
-      .find()
+      .find({_id: {$ne: currentUser}})
       .populate("warehouse")
       .populate("supervisor")
       .populate("field_officers")

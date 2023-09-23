@@ -28,6 +28,12 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).send({error: true, message: "Invalid credential"})
     }
 
+    if (!user.isEnable) {
+      return res
+        .status(400)
+        .send({error: true, message: "Sorry your account has been disable"})
+    }
+
     const token = jwt.sign(
       {userId: user._id, email: user.email, phone: user.phone, role: user.role},
       process.env.JWT_SECRET!,

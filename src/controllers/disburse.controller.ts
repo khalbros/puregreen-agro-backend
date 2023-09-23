@@ -200,7 +200,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     if (!disburse) {
       return res.status(400).send({
         error: true,
-        message: "repayment error",
+        message: "Farmer has no pending loan",
       })
     }
     const warehouse = await warehouseModel.findById(user?.warehouse)
