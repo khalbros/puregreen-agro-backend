@@ -206,27 +206,18 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     const warehouse = await warehouseModel.findById(user?.warehouse)
 
     if (warehouse) {
-      const updateCommodities = new Promise(async (resolve, rejects) => {
-        warehouse?.commodities?.forEach((comm) => {
-          return commodities?.map((com) => {
-            if (
-              comm?.commodity === new mongoose.Types.ObjectId(com.commodity)
-            ) {
-              comm.quantity = comm.quantity + com.quantity
-              comm.weight = comm.weight + Number(com.gross_weight)
-              return comm
-            } else {
-              return {
-                commodity: new mongoose.Types.ObjectId(com.commodity),
-                quantity: com.quantity,
-                weight: com.gross_weight,
-              }
-            }
-          })
+      warehouse?.commodities?.map((comm) => {
+        commodities?.map((com) => {
+          if (String(comm?.commodity) === String(com.commodity)) {
+            comm.quantity = comm.quantity + com.quantity
+            comm.weight = comm.weight + Number(com.gross_weight)
+            return comm
+          } else {
+            return com
+          }
         })
-        const saved = await warehouse.save()
-        resolve(saved)
       })
+      await warehouse.save()
     }
     const disbursement = await disburseModel
       .findById(disburse._id)

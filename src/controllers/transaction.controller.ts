@@ -68,23 +68,21 @@ export const createTransaction = async (req: Request, res: Response) => {
               message: "Warehouse not found",
             })
           }
+
           const comm = warehouse?.commodities.find((commodity) => {
-            commodity.commodity === data.commodity
+            return String(commodity.commodity) === String(data.commodity)
           })
           if (comm) {
             warehouse.commodities = warehouse?.commodities.map((commodity) => {
-              if (commodity.commodity === data.commodity) {
+              console.log("called")
+              if (String(commodity.commodity) === String(data.commodity)) {
                 commodity.quantity =
                   Number(commodity.quantity) + Number(data.num_bags)
-                commodity.weight
-                  ? (commodity.weight =
-                      Number(commodity.weight) + Number(data.gross_weight))
-                  : (commodity = {
-                      ...commodity,
-                      weight: Number(data.gross_weight),
-                    })
+                commodity.weight =
+                  Number(commodity.weight) + Number(data.gross_weight)
+                return commodity
               } else {
-                commodity
+                return commodity
               }
             }) as never
             await warehouse.save()
@@ -96,9 +94,11 @@ export const createTransaction = async (req: Request, res: Response) => {
             })
             await warehouse.save()
           }
-          return res
-            .status(201)
-            .send({error: false, message: "transaction created successfully"})
+          return res.status(201).send({
+            error: false,
+            message: "transaction created successfully",
+            data,
+          })
         },
         (err) => {
           return res.send({error: true, message: err?.message})
