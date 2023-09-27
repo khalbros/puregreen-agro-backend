@@ -31,7 +31,6 @@ const userSchema = new Schema(
     },
     address: {
       type: String,
-      required: [true, "role is required"],
     },
     warehouse: {
       type: Schema.Types.ObjectId,
