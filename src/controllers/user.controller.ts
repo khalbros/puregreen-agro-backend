@@ -197,30 +197,40 @@ export const updateUser = async (req: Request, res: Response) => {
       })
     }
     if (role === "WAREHOUSE MANAGER") {
-      const selectedwarehouse = await warehouseModel.findById({_id: warehouse})
-      if (!selectedwarehouse) {
-        return res.send({error: true, message: "Invalid warehouse ID"})
-      }
-      selectedwarehouse.warehouse_manager = user._id
-      await selectedwarehouse.save()
-    }
-    if (role === "SUPERVISOR") {
-      const selectedwarehouse = await warehouseModel.findById({_id: warehouse})
-      if (!selectedwarehouse) {
-        return res.send({error: true, message: "Invalid warehouse ID"})
-      }
-      if (!selectedwarehouse.supervisors.includes(user._id)) {
-        selectedwarehouse.supervisors.push(user._id)
+      if (warehouse) {
+        const selectedwarehouse = await warehouseModel.findById({
+          _id: warehouse,
+        })
+        if (!selectedwarehouse) {
+          return res.send({error: true, message: "Invalid warehouse ID"})
+        }
+        selectedwarehouse.warehouse_manager = user._id
         await selectedwarehouse.save()
       }
     }
-    if (role === "FIELD OFFICER") {
-      const selectedSupervisor = await userModel.findById({_id: supervisor})
-      if (!selectedSupervisor) {
-        return res.send({error: true, message: "Invalid Supervisor ID"})
+    if (role === "SUPERVISOR") {
+      if (warehouse) {
+        const selectedwarehouse = await warehouseModel.findById({
+          _id: warehouse,
+        })
+        if (!selectedwarehouse) {
+          return res.send({error: true, message: "Invalid warehouse ID"})
+        }
+        if (!selectedwarehouse.supervisors.includes(user._id)) {
+          selectedwarehouse.supervisors.push(user._id)
+          await selectedwarehouse.save()
+        }
       }
-      selectedSupervisor.field_officers.push(user._id)
-      await selectedSupervisor.save()
+    }
+    if (role === "FIELD OFFICER") {
+      if (supervisor) {
+        const selectedSupervisor = await userModel.findById({_id: supervisor})
+        if (!selectedSupervisor) {
+          return res.send({error: true, message: "Invalid Supervisor ID"})
+        }
+        selectedSupervisor.field_officers.push(user._id)
+        await selectedSupervisor.save()
+      }
     }
     return res
       .status(200)

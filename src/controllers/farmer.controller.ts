@@ -56,18 +56,15 @@ export const createFarmer = async (req: Request, res: Response) => {
       !lga ||
       !village ||
       !address ||
+      !id_type ||
+      !id_number ||
+      !guarantor_name ||
+      !guarantor_number ||
+      !guarantor_address ||
       !guarantor_village ||
       !guarantor_id_type ||
       !guarantor_id_number ||
-      !guarantor_address ||
-      !id_type ||
-      !guarantor_name ||
-      !guarantor_number ||
-      !id_number ||
       !cooperative ||
-      !id_card ||
-      !guarantor_id ||
-      !profile_img ||
       !role
     ) {
       return res.status(400).send({
@@ -84,16 +81,22 @@ export const createFarmer = async (req: Request, res: Response) => {
         .status(400)
         .send({error: true, message: "Phone number already exist"})
 
+    const ninCheck = await farmerModel.findOne({id_number})
+    if (ninCheck)
+      return res
+        .status(400)
+        .send({error: true, message: `${id_type} number already exist`})
+
     const newFarmer = await farmerModel.create({
       ...req.body,
       farmer_id: await generateFarmerID(),
       name: name.toLowerCase(),
       profile_img: profile_img && (await imageUpload(profile_img)),
-      id_card: await imageUpload(id_card),
-      guarantor_id: await imageUpload(guarantor_id),
+      id_card: id_card && (await imageUpload(id_card)),
+      guarantor_id: guarantor_id && (await imageUpload(guarantor_id)),
       guarantor_name: guarantor_name.toLowerCase(),
       field_officer: user?._id,
-      supervisor: user?.supervisor,
+      supervisor: user?.role === "SUPERVISOR" ? user?._id : user?.supervisor,
     })
 
     newFarmer
@@ -364,9 +367,7 @@ export const getAllFarmers = async (req: Request, res: Response) => {
             .send({error: false, message: "Success", data: farmers})
         }
         const farmers = await farmerModel
-          .find({
-            $or: [{field_officer: user?._id}, {supervisor: user?.supervisor}],
-          })
+          .find()
           .populate("field_officer")
           .populate("cooperative")
           .populate("supervisor")
@@ -416,21 +417,6 @@ export const getAllFarmers = async (req: Request, res: Response) => {
           .status(200)
           .send({error: false, message: "Success", data: farmers})
       }
-      const farmers = await farmerModel
-        .find({
-          ...query,
-        })
-        .populate("field_officer")
-        .populate("supervisor")
-        .populate("cooperative")
-        .populate({
-          path: "cooperative",
-          populate: {path: "team"},
-        })
-        .sort({createdAt: -1})
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: farmers})
     }
     if (user?.role === "SUPERVISOR") {
       const farmers = await farmerModel
@@ -466,11 +452,12 @@ export const getAllFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
+
     const farmers = await farmerModel
-      .find({$or: [{field_officer: user?._id}, {supervisor: user?.supervisor}]})
+      .find()
       .populate("field_officer")
-      .populate("cooperative")
       .populate("supervisor")
+      .populate("cooperative")
       .populate({
         path: "cooperative",
         populate: {path: "team"},

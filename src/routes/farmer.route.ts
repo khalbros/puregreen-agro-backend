@@ -19,9 +19,9 @@ import {
 
 const router: Router = Router()
 
-router.post("/", isFieldOfficer, createFarmer)
+router.post("/", isSupervisorOrFieldOfficer, createFarmer)
 router.get("/", isLoggedIn, getAllApprovedFarmers)
-router.get("/all", isSupervisorOrFieldOfficer, getAllFarmers)
+router.get("/all", isLoggedIn, getAllFarmers)
 router.get("/:id", isLoggedIn, getFarmer)
 router.patch("/:id", isSupervisorOrFieldOfficer, updateFarmer)
 router.delete("/:id", isFieldOfficer, deleteFarmer)

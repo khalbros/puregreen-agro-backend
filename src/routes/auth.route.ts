@@ -5,6 +5,7 @@ import {
   forgotPassword,
   resetPassword,
   logout,
+  verifyOtp,
 } from "../controllers/auth.controller"
 import {isLoggedIn} from "../middlewares/auth.middleware"
 
@@ -17,6 +18,7 @@ router.post("/forgot-password", forgotPassword)
 router.post("/change-password", isLoggedIn, changePassword)
 
 router.post("/reset-password", resetPassword)
+router.post("/verify-otp", verifyOtp)
 
 router.post("/logout", isLoggedIn, logout)
 

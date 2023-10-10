@@ -6,9 +6,9 @@ const otpSchema = new Schema(
       type: String,
       required: [true, "OTP is missing"],
     },
-    user_email: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    user: {
+      type: String,
+      required: [true, "User email is missing"],
     },
     dispatch_id: {
       type: Schema.Types.ObjectId,

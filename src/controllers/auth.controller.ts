@@ -56,6 +56,8 @@ export const login = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const {email}: IUser = req.body
+  console.log(req.body)
+
   if (!email) {
     return res.status(400).send({
       error: true,
@@ -68,31 +70,35 @@ export const forgotPassword = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(400).send({error: true, message: "Email not found"})
     }
-    const randomNumber = Math.floor(Math.random() * 10000)
+    const randomNumber = Math.floor(Math.random() * 90000) + 10000
 
     const otp = await bcryptjs.hash(String(randomNumber), 12)
 
     sendEmail({
-      to: email,
+      to: email.toLowerCase(),
       subject: "PASSWORD RESET",
-      message: `Your verification code is: <h3>${otp}<h3/>`,
+      message: `Your verification code is: <h3>${randomNumber}<h3/>`,
     })
       .then(async (result: any) => {
         const newOtp = await otpModel.create({
           otp,
-          user_email: email,
+          user: email.toLowerCase(),
           expire_in: new Date(new Date().getTime() + 5 * 60 * 1000),
         })
         await newOtp.save()
         return res
           .status(200)
-          .cookie("user", email, {
+          .cookie("user", email.toLowerCase(), {
             httpOnly: true,
             secure: true,
             maxAge: 86400000,
             sameSite: "none",
           })
-          .send({error: false, message: "OTP has been sent"})
+          .send({
+            error: false,
+            message: "OTP has been sent",
+            data: email.toLowerCase(),
+          })
       })
       .catch((error: any) => res.send({error: true, message: error?.message}))
   } catch (error: any) {
@@ -137,11 +143,18 @@ export const changePassword = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const email = req.cookies.user
+    const verified = req.cookies.verified
 
     if (!email) {
       return res.status(400).send({
         error: true,
         message: "Error Please pass an ID to query",
+      })
+    }
+    if (!verified || verified != "true") {
+      return res.status(400).send({
+        error: true,
+        message: "OTP not verified",
       })
     }
 
@@ -167,6 +180,8 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const verifyOtp = async (req: Request, res: Response) => {
   const {otp} = req.body
   const email = req.cookies.user
+  console.log(req.body)
+
   if (!otp) {
     return res.status(400).send({
       error: true,
@@ -175,7 +190,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await otpModel.findOne({email: email.toLowerCase()})
+    const user = await otpModel.findOne({user: email.toLowerCase()})
     if (!user) {
       return res
         .status(400)
@@ -187,7 +202,15 @@ export const verifyOtp = async (req: Request, res: Response) => {
       return res.status(400).send({error: true, message: "Wrong OTP"})
     }
     await otpModel.findByIdAndDelete(user._id)
-    return res.status(200).send({error: false, message: "OTP verified"})
+    return res
+      .status(200)
+      .cookie("verified", "true", {
+        httpOnly: true,
+        secure: true,
+        maxAge: 86400000,
+        sameSite: "none",
+      })
+      .send({error: false, message: "OTP verified"})
   } catch (error: any) {
     return res.send({error: true, message: error?.message})
   }
