@@ -209,7 +209,7 @@ export const deleteCooperative = async (req: Request, res: Response) => {
 export const countCooperativies = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await cooperativeModel
         .find({supervisor: user?.userId})
         .count()
@@ -308,7 +308,7 @@ export const getCooperativeMembersWithCount = async (
   const queries = req.query
   const user = await currentUser(req, res)
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const cooperatives = await cooperativeModel.aggregate([
         {$match: {supervisor: new mongoose.Types.ObjectId(user.userId)}},
         {

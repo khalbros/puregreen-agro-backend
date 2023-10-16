@@ -276,7 +276,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const queries = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await disburseModel
         .find({disbursedBy: user?.userId})
         .populate("farmer")
@@ -424,7 +424,7 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {project} = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?.userId,
@@ -489,7 +489,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {project} = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?.userId,
@@ -555,7 +555,7 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {project} = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?.userId,
@@ -624,7 +624,7 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {project} = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({disbursedBy: user?.userId, project})
         : await disburseModel.find({disbursedBy: user?.userId})
@@ -678,7 +678,7 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {project} = req.query
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?.userId,

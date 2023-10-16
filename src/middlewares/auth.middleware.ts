@@ -140,7 +140,7 @@ export const isSupervisor = async (
         .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
-    if ((verify as IVerifedToken).role !== "SUPERVISOR") {
+    if ((verify as IVerifedToken).role !== "WAREHOUSE ADMIN") {
       return res.status(403).send({error: true, message: "Access Denied!"})
     }
     next()
@@ -237,7 +237,7 @@ export const isSupervisorOrFieldOfficer = async (
         .send({error: true, message: "invalid or expired token"})
     }
     if (
-      (verify as IVerifedToken).role !== "SUPERVISOR" &&
+      (verify as IVerifedToken).role !== "WAREHOUSE ADMIN" &&
       (verify as IVerifedToken).role !== "FIELD OFFICER"
     ) {
       return res.status(403).send({
@@ -273,7 +273,7 @@ export const isSupervisorOrWarehouseManager = async (
         .send({error: true, message: "invalid or expired token"})
     }
     if (
-      (verify as IVerifedToken).role !== "SUPERVISOR" &&
+      (verify as IVerifedToken).role !== "WAREHOUSE ADMIN" &&
       (verify as IVerifedToken).role !== "WAREHOUSE MANAGER"
     ) {
       return res.status(403).send({error: true, message: "Access Denied!"})

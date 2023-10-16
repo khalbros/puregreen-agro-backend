@@ -66,7 +66,7 @@ export const createUser = async (req: Request, res: Response) => {
       selectedwarehouse.warehouse_manager = newUser._id
       await selectedwarehouse.save()
     }
-    if (role === "SUPERVISOR") {
+    if (role === "WAREHOUSE ADMIN") {
       const selectedwarehouse = await warehouseModel.findById({_id: warehouse})
       if (!selectedwarehouse) {
         return res.send({error: true, message: "Invalid warehouse ID"})
@@ -208,7 +208,7 @@ export const updateUser = async (req: Request, res: Response) => {
         await selectedwarehouse.save()
       }
     }
-    if (role === "SUPERVISOR") {
+    if (role === "WAREHOUSE ADMIN") {
       if (warehouse) {
         const selectedwarehouse = await warehouseModel.findById({
           _id: warehouse,
@@ -301,7 +301,7 @@ export const getAllFEOs = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   try {
     if (queries) {
-      if (user?.role === "SUPERVISOR") {
+      if (user?.role === "WAREHOUSE ADMIN") {
         const users = await userModel
           .find({role: "FIELD OFFICER", supervisor: user?.userId, ...queries})
           .populate("warehouse")
@@ -324,7 +324,7 @@ export const getAllFEOs = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: users})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const users = await userModel
         .find({role: "FIELD OFFICER", supervisor: user?.userId})
         .populate("warehouse")
@@ -353,7 +353,7 @@ export const getFEOWithFarmersCount = async (req: Request, res: Response) => {
   const queries = req.query
   const user = await currentUser(req, res)
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const users = await userModel
         .aggregate([
           {$match: {supervisor: new mongoose.Types.ObjectId(user.userId)}},

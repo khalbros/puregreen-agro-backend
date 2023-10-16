@@ -96,7 +96,8 @@ export const createFarmer = async (req: Request, res: Response) => {
       guarantor_id: guarantor_id && (await imageUpload(guarantor_id)),
       guarantor_name: guarantor_name.toLowerCase(),
       field_officer: user?._id,
-      supervisor: user?.role === "SUPERVISOR" ? user?._id : user?.supervisor,
+      supervisor:
+        user?.role === "WAREHOUSE ADMIN" ? user?._id : user?.supervisor,
     })
 
     newFarmer
@@ -160,7 +161,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
     const user = await userModel.findById(cuser?.userId)
     if (query) {
       if (query.limit) {
-        if (user?.role === "SUPERVISOR") {
+        if (user?.role === "WAREHOUSE ADMIN") {
           const farmers = await farmerModel
             .find({
               ...query,
@@ -215,7 +216,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
           .status(200)
           .send({error: false, message: "Success", data: farmers})
       }
-      if (user?.role === "SUPERVISOR") {
+      if (user?.role === "WAREHOUSE ADMIN") {
         const farmers = await farmerModel
           .find({
             ...query,
@@ -267,7 +268,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: user?._id,
@@ -328,7 +329,7 @@ export const getAllFarmers = async (req: Request, res: Response) => {
     const user = await userModel.findById(cuser?.userId)
     if (query) {
       if (query.limit) {
-        if (user?.role === "SUPERVISOR") {
+        if (user?.role === "WAREHOUSE ADMIN") {
           const farmers = await farmerModel
             .find({
               ...query,
@@ -381,7 +382,7 @@ export const getAllFarmers = async (req: Request, res: Response) => {
           .status(200)
           .send({error: false, message: "Success", data: farmers})
       }
-      if (user?.role === "SUPERVISOR") {
+      if (user?.role === "WAREHOUSE ADMIN") {
         const farmers = await farmerModel
           .find({
             ...query,
@@ -418,7 +419,7 @@ export const getAllFarmers = async (req: Request, res: Response) => {
           .send({error: false, message: "Success", data: farmers})
       }
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: user?._id,
@@ -485,7 +486,7 @@ export const verifiedFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: new mongoose.Types.ObjectId(user?.userId),
@@ -520,7 +521,7 @@ export const unVerifiedFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: new mongoose.Types.ObjectId(user?.userId),
@@ -611,7 +612,7 @@ export const countRegisteredFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({supervisor: new mongoose.Types.ObjectId(user?.userId)})
         .count()
@@ -642,7 +643,7 @@ export const countVerifiedFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: new mongoose.Types.ObjectId(user?.userId),
@@ -676,7 +677,7 @@ export const countUnverifiedFarmers = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: farmers})
     }
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({
           supervisor: new mongoose.Types.ObjectId(user?.userId),
@@ -700,7 +701,7 @@ export const getFeoFarmers = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {id} = req.params
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({supervisor: user?.userId, field_officer: id})
         .populate("field_officer")
@@ -739,7 +740,7 @@ export const countFeoFarmers = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {id} = req.params
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({supervisor: user?.userId, field_officer: id})
         .count()
@@ -760,7 +761,7 @@ export const countFarmers = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   const {id} = req.params
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel.find({supervisor: user?.userId}).count()
       return res
         .status(200)

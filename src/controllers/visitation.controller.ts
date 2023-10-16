@@ -117,7 +117,7 @@ export const getVisitation = async (req: Request, res: Response) => {
 export const getAllVisitations = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   try {
-    if (user?.role === "SUPERVISOR") {
+    if (user?.role === "WAREHOUSE ADMIN") {
       const visitations = await visitationModel
         .find({visited_by: user.userId})
         .populate("visited_by")
