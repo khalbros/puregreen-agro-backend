@@ -40,6 +40,9 @@ const farmerSchema = new Schema(
       type: String,
       required: [true, "residental address is required"],
     },
+    farm_location: {
+      type: String,
+    },
     id_type: {
       type: String,
       required: [true, "id card type is required"],

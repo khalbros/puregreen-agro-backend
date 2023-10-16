@@ -108,6 +108,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
       equity,
       loan_amount,
       repayment_amount,
+      outstanding_loan: repayment_amount,
       farmer: farmerCheck && farmerCheck?._id,
       disbursedBy: userID,
       ref_id: await generateRefID(),

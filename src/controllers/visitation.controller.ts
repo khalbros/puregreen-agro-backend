@@ -37,8 +37,7 @@ export const createVisitation = async (req: Request, res: Response) => {
       !farm_location ||
       !havest_date ||
       !commodity ||
-      !comment ||
-      !upload
+      !comment
     ) {
       return res.status(400).send({
         error: true,
@@ -62,7 +61,7 @@ export const createVisitation = async (req: Request, res: Response) => {
       havest_date,
       commodity: comm,
       comment,
-      upload: await imageUpload(upload),
+      upload: upload && (await imageUpload(upload)),
       visited_by: userId,
     })
     if (!newVisitation) {
@@ -164,7 +163,7 @@ export const updateVisitation = async (req: Request, res: Response) => {
 
     const visitation = await visitationModel.findByIdAndUpdate(
       id,
-      {...req.body, upload: upload && (await fileUpload(upload))},
+      {...req.body, upload: upload && (await imageUpload(upload))},
       {
         new: true,
         runValidators: true,

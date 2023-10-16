@@ -11,6 +11,7 @@ export interface IFarmer {
   lga: string
   village: string
   address: string
+  farm_location: string
   id_type: string
   id_number: string
   id_card: string

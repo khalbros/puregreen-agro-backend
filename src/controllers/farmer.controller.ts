@@ -471,6 +471,77 @@ export const getAllFarmers = async (req: Request, res: Response) => {
   }
 }
 
+export const verifiedFarmers = async (req: Request, res: Response) => {
+  const user = await currentUser(req, res)
+  try {
+    if (user?.role === "FIELD OFFICER") {
+      const farmers = await farmerModel
+        .find({
+          field_officer: new mongoose.Types.ObjectId(user?.userId),
+          isApproved: true,
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    if (user?.role === "SUPERVISOR") {
+      const farmers = await farmerModel
+        .find({
+          supervisor: new mongoose.Types.ObjectId(user?.userId),
+          isApproved: true,
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    const farmers = await farmerModel
+      .find({isApproved: true})
+      .sort({createdAt: -1})
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: farmers})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+export const unVerifiedFarmers = async (req: Request, res: Response) => {
+  const user = await currentUser(req, res)
+  try {
+    if (user?.role === "FIELD OFFICER") {
+      const farmers = await farmerModel
+        .find({
+          field_officer: new mongoose.Types.ObjectId(user?.userId),
+          isApproved: false,
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    if (user?.role === "SUPERVISOR") {
+      const farmers = await farmerModel
+        .find({
+          supervisor: new mongoose.Types.ObjectId(user?.userId),
+          isApproved: false,
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    const farmers = await farmerModel
+      .find({isApproved: false})
+      .sort({createdAt: -1})
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: farmers})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
 export const updateFarmer = async (req: Request, res: Response) => {
   try {
     const {id} = req.params

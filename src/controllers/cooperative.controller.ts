@@ -265,7 +265,7 @@ export const getCooperativeMembers = async (req: Request, res: Response) => {
   const {id} = req.params
   try {
     const cooperatives = await farmerModel
-      .find({cooperative: id, isApproved: true})
+      .find({cooperative: id})
       .sort({createAt: -1})
 
     if (!cooperatives) {

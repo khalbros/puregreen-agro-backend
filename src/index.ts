@@ -14,6 +14,7 @@ export const io = new Server(server, {
     credentials: true,
   },
 })
+
 export const activeSockets: Record<string, Socket> = {}
 
 mongoose.set("strictQuery", true)
