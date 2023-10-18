@@ -24,8 +24,11 @@ export interface IDisburse {
   logistics_fee?: number
   processing_fee?: number
   status?: string
+  isApproved?: boolean
   disbursedBy?: string
   repayedBy?: string
+  repayment_type?: string
+  warehouse?: string
   createdAt?: string
   updatedAt?: string
 }

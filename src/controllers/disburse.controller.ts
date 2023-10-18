@@ -15,7 +15,6 @@ import {
   getUserRole,
 } from "../utils"
 import {getUserId} from "../utils/index"
-import mongoose from "mongoose"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -113,6 +112,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
       disbursedBy: userID,
       ref_id: await generateRefID(),
       project,
+      warehouse: user?.warehouse,
     })
 
     newDisbursement
@@ -164,15 +164,31 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       outstanding_loan,
       processing_fee,
       logistics_fee,
+      repayment_type,
     }: IDisburse = req.body
     let farmerID
 
     if (
-      !farmer ||
+      (repayment_type === "Cash" && !farmer) ||
+      !cash ||
+      !payable_amount ||
+      !logistics_fee ||
+      !processing_fee ||
+      !overage ||
+      !outstanding_loan
+    ) {
+      return res.status(400).send({
+        error: true,
+        message: "disbursement error (some fields are empty / invalid)",
+      })
+    }
+
+    if (
+      (repayment_type === "Grains" && !farmer) ||
       !num_bags ||
       !gross_weight ||
       !net_weight ||
-      (!commodities && !cash) ||
+      !commodities ||
       !payable_amount ||
       !overage ||
       !logistics_fee ||
@@ -273,12 +289,38 @@ export const getDisbursement = async (req: Request, res: Response) => {
 }
 
 export const getAllDisbursements = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const {project} = req.query
   const queries = req.query
+
   try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId)
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disbursement = await disburseModel
+        .find({
+          warehouse: String(user?.warehouse),
+        })
+        .populate("farmer")
+        .populate("commodities.commodity")
+        .populate({path: "commodities.commodity", populate: {path: "grade"}})
+        .populate("bundle")
+        .populate("disbursedBy")
+        .populate("repayedBy")
+        .sort({createdAt: -1})
+        .limit(Number(queries.limit))
+      if (!disbursement) {
+        return res.status(404).send({
+          error: true,
+          message: "Disbursementment not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: disbursement})
+    }
     if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await disburseModel
-        .find({disbursedBy: user?.userId})
+        .find({disbursedBy: user?._id})
         .populate("farmer")
         .populate("commodities.commodity")
         .populate({path: "commodities.commodity", populate: {path: "grade"}})
@@ -297,29 +339,9 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: disbursement})
     }
-    if (user?.role === "WAREHOUE MANAGER") {
-      const disbursement = await disburseModel
-        .find({repayedBy: user?.userId})
-        .populate("farmer")
-        .populate("commodities.commodity")
-        .populate({path: "commodities.commodity", populate: {path: "grade"}})
-        .populate("bundle")
-        .populate("disbursedBy")
-        .populate("repayedBy")
-        .sort({createdAt: -1})
-        .limit(Number(queries.limit))
-      if (!disbursement) {
-        return res.status(404).send({
-          error: true,
-          message: "Disbursementment not found",
-        })
-      }
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: disbursement})
-    }
+
     const disbursement = await disburseModel
-      .find()
+      .find({project: project && project})
       .populate("farmer")
       .populate("commodities.commodity")
       .populate({path: "commodities.commodity", populate: {path: "grade"}})
@@ -345,8 +367,6 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
 export const updateDisbursement = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
-    const {farmer} = req.body
-    let farmerID
 
     if (!id) {
       return res.status(400).send({
@@ -355,21 +375,44 @@ export const updateDisbursement = async (req: Request, res: Response) => {
       })
     }
 
-    if (farmer) {
-      const farmerCheck = await farmerModel.findOne({
-        farmer_id: req.body.farmer,
-      })
-      if (!farmerCheck) {
-        return res.status(400).send({
-          error: true,
-          message: "error invalid farmer",
-        })
-      }
-      farmerID = farmerCheck._id
-    }
     const disburse = await disburseModel.findByIdAndUpdate(
       id,
-      {...req.body, farmer: farmer && farmerID},
+      {...req.body},
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Disbursement updated", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const approveDisbursement = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    const {isApproved} = req.body
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const disburse = await disburseModel.findByIdAndUpdate(
+      id,
+      {isApproved},
       {
         new: true,
         runValidators: true,
@@ -421,17 +464,18 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
 // counts
 
 export const countLoanDisburse = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             project,
           })
         : await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
           })
 
       if (!disburse) {
@@ -448,11 +492,11 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             project,
           })
         : await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
           })
 
       if (!disburse) {
@@ -486,18 +530,19 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
 }
 
 export const countRecoveredLoan = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "PAID",
             project,
           })
         : await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "PAID",
           })
 
@@ -515,12 +560,12 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "PAID",
             project,
           })
         : await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "PAID",
           })
       if (!disburse) {
@@ -534,7 +579,9 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: amount})
     }
-    const disburse = await disburseModel.find()
+    const disburse = project
+      ? await disburseModel.find({project})
+      : await disburseModel.find()
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
@@ -552,18 +599,19 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
 }
 
 export const countOutstandinLoan = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "NOT PAID",
             project,
           })
         : await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "NOT PAID",
           })
 
@@ -581,12 +629,12 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "NOT PAID",
             project,
           })
         : await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "NOT PAID",
           })
 
@@ -621,13 +669,14 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
 }
 
 export const countDisburseHectares = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
-        ? await disburseModel.find({disbursedBy: user?.userId, project})
-        : await disburseModel.find({disbursedBy: user?.userId})
+        ? await disburseModel.find({disbursedBy: user?._id, project})
+        : await disburseModel.find({disbursedBy: user?._id})
 
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
@@ -642,8 +691,8 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await disburseModel.find({repayedBy: user?.userId, project})
-        : await disburseModel.find({repayedBy: user?.userId})
+        ? await disburseModel.find({warehouse: user?.warehouse, project})
+        : await disburseModel.find({warehouse: user?.warehouse})
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
       }
@@ -675,18 +724,19 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
 }
 
 export const countRecoveredNetWeight = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "PAID",
             project,
           })
         : await disburseModel.find({
-            disbursedBy: user?.userId,
+            disbursedBy: user?._id,
             status: "PAID",
           })
 
@@ -704,12 +754,12 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "PAID",
             project,
           })
         : await disburseModel.find({
-            repayedBy: user?.userId,
+            warehouse: user?.warehouse,
             status: "PAID",
           })
       if (!disburse) {
@@ -734,6 +784,72 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
       (total, d) => total + Number(d.net_weight),
       0
     )
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: netweight})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countEquity = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
+  const {project} = req.query
+  try {
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const disburse = project
+        ? await disburseModel.find({
+            disbursedBy: user?._id,
+            status: "PAID",
+            project,
+          })
+        : await disburseModel.find({
+            disbursedBy: user?._id,
+            status: "PAID",
+          })
+
+      if (!disburse) {
+        return res.status(200).send({error: false, message: "not found"})
+      }
+      const netweight = disburse.reduce(
+        (total, d) => total + Number(d.equity),
+        0
+      )
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: netweight})
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disburse = project
+        ? await disburseModel.find({
+            warehouse: user?.warehouse,
+            status: "PAID",
+            project,
+          })
+        : await disburseModel.find({
+            warehouse: user?.warehouse,
+            status: "PAID",
+          })
+      if (!disburse) {
+        return res.status(200).send({error: false, message: "not found"})
+      }
+      const netweight = disburse.reduce(
+        (total, d) => total + Number(d.equity),
+        0
+      )
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: netweight})
+    }
+    const disburse = project
+      ? await disburseModel.find({project})
+      : await disburseModel.find()
+
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const netweight = disburse.reduce((total, d) => total + Number(d.equity), 0)
     return res
       .status(200)
       .send({error: false, message: "Success", data: netweight})

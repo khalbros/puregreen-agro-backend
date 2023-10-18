@@ -31,6 +31,7 @@ const disburseSchema = new Schema(
       },
     ],
     cash: {type: Number},
+    repayment_type: {type: String},
     equity: {
       type: Number,
       required: true,
@@ -69,6 +70,11 @@ const disburseSchema = new Schema(
     status: {
       type: String,
       default: "NOT PAID",
+    },
+    isApproved: {type: Boolean, default: false},
+    warehouse: {
+      type: Schema.Types.ObjectId,
+      ref: "Warehouse",
     },
     project: {
       type: Schema.Types.ObjectId,
