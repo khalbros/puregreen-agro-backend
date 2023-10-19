@@ -112,7 +112,17 @@ export const getAllApprovedCooperatives = async (
   req: Request,
   res: Response
 ) => {
+  const user = await currentUser(req, res)
   try {
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const farmers = await cooperativeModel
+        .find({supervisor: user?.userId})
+        .count()
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
     const cooperatives = await cooperativeModel
       .find({isApproved: true})
       .populate("team")
