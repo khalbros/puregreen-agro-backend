@@ -312,8 +312,6 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
     }
 
     if (user?.role === "WAREHOUSE MANAGER") {
-      console.log((user?.warehouse as any)?.supervisors)
-
       const farmers = await farmerModel
         .find({
           supervisor: {$in: (user?.warehouse as any)?.supervisors},
@@ -327,6 +325,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
           populate: {path: "team"},
         })
         .sort({createdAt: -1})
+
       return res
         .status(200)
         .send({error: false, message: "Success", data: farmers})
@@ -389,7 +388,7 @@ export const getAllFarmers = async (req: Request, res: Response) => {
   const cuser = await currentUser(req, res)
   const query = req.query
   try {
-    const user = await userModel.findById(cuser?.userId)
+    const user = await userModel.findById(cuser?.userId).populate("warehouse")
     if (query) {
       if (query.limit) {
         if (user?.role === "WAREHOUSE ADMIN") {
@@ -481,6 +480,24 @@ export const getAllFarmers = async (req: Request, res: Response) => {
           .status(200)
           .send({error: false, message: "Success", data: farmers})
       }
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const farmers = await farmerModel
+        .find({
+          supervisor: {$in: (user?.warehouse as any)?.supervisors},
+        })
+        .populate("field_officer")
+        .populate("supervisor")
+        .populate("cooperative")
+        .populate({
+          path: "cooperative",
+          populate: {path: "team"},
+        })
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
     }
     if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel

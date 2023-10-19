@@ -94,11 +94,6 @@ export const loanDisbursement = async (req: Request, res: Response) => {
           message: `${inputs.quantity} of ${input.input} available in stock`,
         })
       }
-      inputs.quantity = inputs.quantity - Number(input.quantity)
-      inputs.quantity_out = inputs.quantity_out
-        ? inputs.quantity_out + Number(input.quantity)
-        : Number(input.quantity)
-      inputs.save()
     }
 
     const newDisbursement = await disburseModel.create({
@@ -168,39 +163,53 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     }: IDisburse = req.body
     let farmerID
 
-    if (
-      (repayment_type === "Cash" && !farmer) ||
-      !cash ||
-      !payable_amount ||
-      !logistics_fee ||
-      !processing_fee ||
-      !overage ||
-      !outstanding_loan
-    ) {
-      return res.status(400).send({
-        error: true,
-        message: "disbursement error (some fields are empty / invalid)",
-      })
+    if (repayment_type === "Cash") {
+      if (
+        !farmer ||
+        !cash ||
+        !payable_amount ||
+        !logistics_fee ||
+        !processing_fee ||
+        !overage ||
+        !outstanding_loan
+      ) {
+        return res.status(400).send({
+          error: true,
+          message: "disbursement error (some fields are empty / invalid) cash",
+        })
+      }
+    } else {
+      if (
+        !farmer ||
+        !num_bags ||
+        !gross_weight ||
+        !net_weight ||
+        !commodities ||
+        !payable_amount ||
+        !overage ||
+        !logistics_fee ||
+        !processing_fee ||
+        !outstanding_loan
+      ) {
+        return res.status(400).send({
+          error: true,
+          message:
+            "disbursement error (some fields are empty / invalid) grains",
+        })
+      }
     }
 
     if (
-      (repayment_type === "Grains" && !farmer) ||
-      !num_bags ||
-      !gross_weight ||
-      !net_weight ||
-      !commodities ||
-      !payable_amount ||
-      !overage ||
-      !logistics_fee ||
-      !processing_fee ||
-      !outstanding_loan
+      farmer === undefined ||
+      farmer === "undefined" ||
+      farmer === null ||
+      farmer === "null"
     ) {
       return res.status(400).send({
         error: true,
-        message: "disbursement error (some fields are empty / invalid)",
+        message: "Invalide Farmer (Farmer not from your Warehouse)",
       })
     }
-
     const disburse = await disburseModel.findOneAndUpdate(
       {farmer: farmer, status: "NOT PAID"},
       {
@@ -400,6 +409,8 @@ export const updateDisbursement = async (req: Request, res: Response) => {
 
 export const approveDisbursement = async (req: Request, res: Response) => {
   try {
+    const userID = await getUserId(req, res)
+    const user = await userModel.findById(userID)
     const {id} = req.params
     const {isApproved} = req.body
 
@@ -423,6 +434,37 @@ export const approveDisbursement = async (req: Request, res: Response) => {
         error: true,
         message: "Disbursement not found",
       })
+    }
+
+    const bundleCheck = await bundleModel.findById(disburse?.bundle)
+    if (!bundleCheck) {
+      return res.status(400).send({
+        error: true,
+        message: "Invalid Bundle selection",
+      })
+    }
+    for (const input of bundleCheck.inputs) {
+      const inputs = await inputModel.findOne({
+        name: input.input?.toLowerCase(),
+        warehouse: user?.warehouse,
+      })
+      if (!inputs) {
+        return res.send({
+          error: true,
+          message: `${input.input} is not available in warehouse`,
+        })
+      }
+      if (Number(inputs.quantity) < Number(input.quantity)) {
+        return res.send({
+          error: true,
+          message: `${inputs.quantity} of ${input.input} available in stock`,
+        })
+      }
+      inputs.quantity = inputs.quantity - Number(input.quantity)
+      inputs.quantity_out = inputs.quantity_out
+        ? inputs.quantity_out + Number(input.quantity)
+        : Number(input.quantity)
+      inputs.save()
     }
 
     return res
