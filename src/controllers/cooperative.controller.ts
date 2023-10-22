@@ -1,5 +1,5 @@
 import {Request, Response} from "express"
-import {cooperativeModel, farmerModel} from "../models"
+import {cooperativeModel, farmerModel, userModel} from "../models"
 import {ICooperative} from "../types/cooperative"
 import {currentUser, getUserRole} from "../utils"
 import mongoose from "mongoose"
@@ -108,21 +108,43 @@ export const getAllCooperatives = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
 export const getAllApprovedCooperatives = async (
   req: Request,
   res: Response
 ) => {
-  const user = await currentUser(req, res)
   try {
+    const user = await currentUser(req, res)
+    const cuser = await userModel.findById(user?.userId).populate("warehouse")
     if (user?.role === "WAREHOUSE ADMIN") {
-      const farmers = await cooperativeModel
-        .find({supervisor: user?.userId})
-        .count()
+      const cooperativies = await cooperativeModel
+        .find({isApproved: true, supervisor: user?.userId})
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
 
       return res
         .status(200)
-        .send({error: false, message: "Success", data: farmers})
+        .send({error: false, message: "Success", data: cooperativies})
     }
+
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const cooperativies = await cooperativeModel
+        .find({
+          isApproved: true,
+          supervisor: {$in: (cuser?.warehouse as any)?.supervisors},
+        })
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperativies})
+    }
+
     const cooperatives = await cooperativeModel
       .find({isApproved: true})
       .populate("team")
@@ -217,16 +239,27 @@ export const deleteCooperative = async (req: Request, res: Response) => {
 }
 
 export const countCooperativies = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
   try {
+    const user = await currentUser(req, res)
+    const cuser = await userModel.findById(user?.userId).populate("warehouse")
     if (user?.role === "WAREHOUSE ADMIN") {
-      const farmers = await cooperativeModel
+      const cooperative = await cooperativeModel
         .find({supervisor: user?.userId})
+        .count()
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperative})
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const cooperativies = await cooperativeModel
+        .find({
+          supervisor: {$in: (cuser?.warehouse as any)?.supervisors},
+        })
         .count()
 
       return res
         .status(200)
-        .send({error: false, message: "Success", data: farmers})
+        .send({error: false, message: "Success", data: cooperativies})
     }
     const cooperativies = await cooperativeModel.find().count()
     return res

@@ -1,5 +1,6 @@
 import {Router} from "express"
 import {
+  countAllClients,
   createClient,
   deleteClient,
   getAllClients,
@@ -15,5 +16,6 @@ router.get("/", isLoggedIn, getAllClients)
 router.get("/:id", isWarehouseManager, getClient)
 router.patch("/:id", isWarehouseManager, updateClient)
 router.delete("/:id", isWarehouseManager, deleteClient)
+router.get("/count/all", isLoggedIn, countAllClients)
 
 export default router

@@ -174,3 +174,14 @@ export const deleteClient = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
+export const countAllClients = async (req: Request, res: Response) => {
+  try {
+    const clients = await clientModel.find().count()
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: clients})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}

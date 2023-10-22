@@ -682,8 +682,9 @@ export const deleteFarmer = async (req: Request, res: Response) => {
 // statistics
 
 export const countRegisteredFarmers = async (req: Request, res: Response) => {
-  const user = await currentUser(req, res)
   try {
+    const user = await currentUser(req, res)
+    const cuser = await userModel.findById(user?.userId).populate("warehouse")
     if (user?.role === "FIELD OFFICER") {
       const farmers = await farmerModel
         .find({field_officer: new mongoose.Types.ObjectId(user?.userId)})
@@ -695,6 +696,14 @@ export const countRegisteredFarmers = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE ADMIN") {
       const farmers = await farmerModel
         .find({supervisor: new mongoose.Types.ObjectId(user?.userId)})
+        .count()
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const farmers = await farmerModel
+        .find({supervisor: {$in: (cuser?.warehouse as any)?.supervisors}})
         .count()
       return res
         .status(200)
