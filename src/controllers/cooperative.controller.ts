@@ -89,6 +89,23 @@ export const getCooperative = async (req: Request, res: Response) => {
 
 export const getAllCooperatives = async (req: Request, res: Response) => {
   try {
+    const user = await currentUser(req, res)
+    const cuser = await userModel.findById(user?.userId).populate("warehouse")
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const cooperativies = await cooperativeModel
+        .find({
+          supervisor: {$in: (cuser?.warehouse as any)?.supervisors},
+        })
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperativies})
+    }
+
     const cooperatives = await cooperativeModel
       .find()
       .populate("team")
@@ -101,6 +118,7 @@ export const getAllCooperatives = async (req: Request, res: Response) => {
         message: "Cooperative not found",
       })
     }
+
     return res
       .status(200)
       .send({error: false, message: "Success", data: cooperatives})

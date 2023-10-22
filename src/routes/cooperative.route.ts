@@ -26,7 +26,7 @@ const router: Router = Router()
 
 router.post("/", isSuperAdminOrAdmin, createCooperative)
 router.get("/", isLoggedIn, getAllApprovedCooperatives)
-router.get("/get/all", isSuperAdminOrAdmin, getAllCooperatives)
+router.get("/get/all", isLoggedIn, getAllCooperatives)
 router.get("/:id", isLoggedIn, getCooperative)
 router.patch("/:id", isSuperAdminOrAdmin, updateCooperative)
 router.delete("/:id", isSuperAdmin, deleteCooperative)
