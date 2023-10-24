@@ -921,7 +921,6 @@ export const countEquity = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?._id,
-
             project,
           })
         : await disburseModel.find({
@@ -943,7 +942,6 @@ export const countEquity = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-
             project,
           })
         : await disburseModel.find({

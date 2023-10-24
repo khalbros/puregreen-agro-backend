@@ -1,11 +1,14 @@
 import {Request, Response} from "express"
 import {cooperativeModel, farmerModel, userModel} from "../models"
 import {ICooperative} from "../types/cooperative"
-import {currentUser, getUserRole} from "../utils"
+import {currentUser, getUserId, getUserRole} from "../utils"
 import mongoose from "mongoose"
 
 export const createCooperative = async (req: Request, res: Response) => {
   try {
+    const user = await getUserId(req, res)
+    const cuser = await userModel.findById(user)
+
     const {name, chairman, village, village_head, phone}: ICooperative =
       req.body
 
@@ -26,6 +29,7 @@ export const createCooperative = async (req: Request, res: Response) => {
       chairman: chairman.toLowerCase(),
       village: village.toLowerCase(),
       village_head: village_head.toLowerCase(),
+      supervisor: cuser?.role === "WAREHOUSE ADMIN" ? user : cuser?.supervisor,
       phone,
     })
 
@@ -105,6 +109,34 @@ export const getAllCooperatives = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: cooperativies})
     }
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const cooperativies = await cooperativeModel
+        .find({
+          supervisor: user,
+        })
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperativies})
+    }
+    if (user?.role === "FIELD OFFICER") {
+      const cooperativies = await cooperativeModel
+        .find({
+          supervisor: cuser?.supervisor,
+        })
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperativies})
+    }
 
     const cooperatives = await cooperativeModel
       .find()
@@ -153,6 +185,18 @@ export const getAllApprovedCooperatives = async (
           isApproved: true,
           supervisor: {$in: (cuser?.warehouse as any)?.supervisors},
         })
+        .populate("team")
+        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate("supervisor")
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cooperativies})
+    }
+    if (user?.role === "FIELD OFFICER") {
+      const cooperativies = await cooperativeModel
+        .find({isApproved: true, supervisor: cuser?.supervisor})
         .populate("team")
         .populate({path: "team", populate: {path: "supervisor"}})
         .populate("supervisor")
