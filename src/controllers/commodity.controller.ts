@@ -10,9 +10,9 @@ import {getUserId, getUserRole} from "../utils"
 
 export const createCommodity = async (req: Request, res: Response) => {
   try {
-    const {name, price, type, grade}: ICommodity = req.body
+    const {name, price}: ICommodity = req.body
 
-    if (!name || !price || !type || !grade) {
+    if (!name || !price) {
       return res.status(400).send({
         error: true,
         message: "commodities error (some fields are empty / invalid)",
@@ -20,21 +20,16 @@ export const createCommodity = async (req: Request, res: Response) => {
     }
     const nameCheck = await commodityModel.findOne({
       name: name.toLowerCase(),
-      type,
-      grade,
     })
     if (nameCheck) {
-      if (nameCheck?.type === type) {
-        return res
-          .status(400)
-          .send({error: true, message: "commodity already exist"})
-      }
+      return res
+        .status(400)
+        .send({error: true, message: "commodity already exist"})
     }
+
     const newCommodity = await commodityModel.create({
       name: name.toLowerCase(),
       price,
-      type,
-      grade,
     })
 
     newCommodity
@@ -94,22 +89,6 @@ export const getAllApprovedCommodities = async (
   res: Response
 ) => {
   try {
-    const {type} = req.query
-    if (type != "" && type) {
-      const commodities = await commodityModel
-        .find({type, isApproved: true})
-        .populate("grade")
-        .sort({createAt: -1})
-      if (!commodities) {
-        return res.status(404).send({
-          error: true,
-          message: "Commodity not found",
-        })
-      }
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: commodities})
-    }
     const commodities = await commodityModel
       .find({isApproved: true})
       .populate("grade")
@@ -130,22 +109,6 @@ export const getAllApprovedCommodities = async (
 
 export const getAllCommodities = async (req: Request, res: Response) => {
   try {
-    const {type} = req.query
-    if (type != "" && type) {
-      const commodities = await commodityModel
-        .find({type})
-        .populate("grade")
-        .sort({createAt: -1})
-      if (!commodities) {
-        return res.status(404).send({
-          error: true,
-          message: "Commodity not found",
-        })
-      }
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: commodities})
-    }
     const commodities = await commodityModel
       .find()
       .populate("grade")

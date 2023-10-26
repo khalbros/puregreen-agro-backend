@@ -216,7 +216,9 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       {
         ...req.body,
         status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
-        repayment_amount: outstanding_loan,
+        repayment_amount: outstanding_loan > 0 ? outstanding_loan : 0,
+        outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
+        overage: overage > 0 ? overage : 0,
         repayedBy: user?._id,
       },
       {
@@ -250,10 +252,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       .findById(disburse._id)
       .populate("farmer")
       .populate("commodities.commodity")
-      .populate({
-        path: "commodities.commodity",
-        populate: {path: "grade"},
-      })
+      .populate("commodities.grade")
       .populate("bundle")
       .populate("disbursedBy")
       .populate("repayedBy")
@@ -281,7 +280,7 @@ export const getDisbursement = async (req: Request, res: Response) => {
       .findById(id)
       .populate("farmer")
       .populate("commodities.commodity")
-      .populate({path: "commodities.commodity", populate: {path: "grade"}})
+      .populate("commodities.grade")
       .populate("bundle")
     if (!disburse) {
       return res.status(404).send({
@@ -312,7 +311,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         })
         .populate("farmer")
         .populate("commodities.commodity")
-        .populate({path: "commodities.commodity", populate: {path: "grade"}})
+        .populate("commodities.grade")
         .populate("bundle")
         .populate("disbursedBy")
         .populate("repayedBy")
@@ -333,7 +332,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .find({disbursedBy: user?._id})
         .populate("farmer")
         .populate("commodities.commodity")
-        .populate({path: "commodities.commodity", populate: {path: "grade"}})
+        .populate("commodities.grade")
         .populate("bundle")
         .populate("disbursedBy")
         .populate("repayedBy")
@@ -354,7 +353,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       .find({project: project && project})
       .populate("farmer")
       .populate("commodities.commodity")
-      .populate({path: "commodities.commodity", populate: {path: "grade"}})
+      .populate("commodities.grade")
       .populate("bundle")
       .populate("disbursedBy")
       .populate("repayedBy")

@@ -28,6 +28,10 @@ const disburseSchema = new Schema(
         net_weight: {
           type: Number,
         },
+        grade: {
+          type: Schema.Types.ObjectId,
+          ref: "Grade",
+        },
       },
     ],
     cash: {type: Number},

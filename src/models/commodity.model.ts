@@ -6,18 +6,13 @@ const commoditySchema = new Schema(
       type: String,
       required: true,
     },
-    price: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      required: true,
-    },
-    grade: {
-      type: Schema.Types.ObjectId,
-      ref: "Grade",
-    },
+    price: [
+      {
+        loan: Number,
+        trade: Number,
+        storage: Number,
+      },
+    ],
     isApproved: {
       type: Boolean,
       default: false,

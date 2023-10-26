@@ -16,6 +16,7 @@ export interface IDisburse {
     gross_weight: string
     net_weight: string
     pp: string
+    grade: string
   }[]
   gross_weight?: number
   net_weight?: number

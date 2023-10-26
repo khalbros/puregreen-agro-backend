@@ -112,13 +112,12 @@ export const getAllCooperatives = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE ADMIN") {
       const cooperativies = await cooperativeModel
         .find({
-          supervisor: user,
+          supervisor: user?.userId,
         })
         .populate("team")
-        .populate({path: "team", populate: {path: "supervisor"}})
+        .populate({path: "team"})
         .populate("supervisor")
         .sort({createdAt: -1})
-
       return res
         .status(200)
         .send({error: false, message: "Success", data: cooperativies})
@@ -239,12 +238,12 @@ export const updateCooperative = async (req: Request, res: Response) => {
       })
     }
 
-    if (user_role !== "ADMIN" && user_role !== "SUPER ADMIN") {
-      return res.status(401).send({
-        error: true,
-        message: "Only admin edit cooperative data",
-      })
-    }
+    // if (user_role !== "ADMIN" && user_role !== "SUPER ADMIN") {
+    //   return res.status(401).send({
+    //     error: true,
+    //     message: "Only admin edit cooperative data",
+    //   })
+    // }
 
     const cooperative = await cooperativeModel.findByIdAndUpdate(id, req.body, {
       new: true,
@@ -277,12 +276,12 @@ export const deleteCooperative = async (req: Request, res: Response) => {
       })
     }
 
-    if (user_role !== "SUPER ADMIN") {
-      return res.status(403).send({
-        error: true,
-        message: "Only Super admin can delete cooperative",
-      })
-    }
+    // if (user_role !== "SUPER ADMIN") {
+    //   return res.status(403).send({
+    //     error: true,
+    //     message: "Only Super admin can delete cooperative",
+    //   })
+    // }
 
     const cooperative = await cooperativeModel.findByIdAndDelete(id)
     if (!cooperative) {
@@ -415,7 +414,7 @@ export const getCooperativeMembersWithCount = async (
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const cooperatives = await cooperativeModel.aggregate([
-        {$match: {supervisor: new mongoose.Types.ObjectId(user.userId)}},
+        {$match: {supervisor: new mongoose.Types.ObjectId(user?.userId)}},
         {
           $lookup: {
             from: "farmers",
