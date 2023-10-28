@@ -202,7 +202,7 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
       .populate("warehouse_manager")
       .populate("supervisors")
       .populate("commodities.commodity")
-      .populate({path: "commodities.commodity", populate: {path: "grade"}})
+      .populate("commodities.grade")
       .sort({createAt: -1})
 
     if (!warehouse) {

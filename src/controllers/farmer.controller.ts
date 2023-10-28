@@ -244,6 +244,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
           .find({
             ...query,
             supervisor: user?._id,
+            isApproved: true,
           })
           .populate("field_officer")
           .populate("supervisor")
@@ -262,6 +263,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
           .find({
             ...query,
             field_officer: user?._id,
+            isApproved: true,
           })
           .populate("field_officer")
           .populate("cooperative")
@@ -297,6 +299,7 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
       const farmers = await farmerModel
         .find({
           ...query,
+          isApproved: true,
         })
         .populate("field_officer")
         .populate("supervisor")

@@ -176,7 +176,8 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       ) {
         return res.status(400).send({
           error: true,
-          message: "disbursement error (some fields are empty / invalid) cash",
+          message:
+            "Cash Loan Repayment error (some fields are empty / invalid) cash",
         })
       }
     } else {
@@ -592,7 +593,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
         return res.status(200).send({error: false, message: "not found"})
       }
       const amount = disburse.reduce(
-        (total, d) => total + Number(d.repayment_amount),
+        (total, d) => total + Number(d.loan_amount),
         0
       )
       return res
@@ -614,7 +615,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
         return res.status(200).send({error: false, message: "not found"})
       }
       const amount = disburse.reduce(
-        (total, d) => total + Number(d.repayment_amount),
+        (total, d) => total + Number(d.loan_amount),
         0
       )
       return res
@@ -629,7 +630,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       return res.status(200).send({error: false, message: "not found"})
     }
     const repayment = disburse.reduce(
-      (total, d) => total + Number(d.repayment_amount),
+      (total, d) => total + Number(d.loan_amount),
       0
     )
     return res
