@@ -17,6 +17,10 @@ const transactionSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Commodity",
     },
+    grade: {
+      type: Schema.Types.ObjectId,
+      ref: "Grade",
+    },
     net_weight: {
       type: String,
       required: true,
@@ -43,6 +47,15 @@ const transactionSchema = new Schema(
     amount: {
       type: String,
       required: true,
+    },
+    admin_fee: {
+      type: Number,
+    },
+    logistics_fee: {
+      type: Number,
+    },
+    handling_fee: {
+      type: Number,
     },
     createdBy: {
       type: Schema.Types.ObjectId,

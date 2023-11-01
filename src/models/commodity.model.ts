@@ -6,13 +6,11 @@ const commoditySchema = new Schema(
       type: String,
       required: true,
     },
-    price: [
-      {
-        loan: Number,
-        trade: Number,
-        storage: Number,
-      },
-    ],
+    price: {
+      loan: Number,
+      trade: Number,
+      storage: Number,
+    },
     isApproved: {
       type: Boolean,
       default: false,

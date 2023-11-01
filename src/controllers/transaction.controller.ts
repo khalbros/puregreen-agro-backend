@@ -8,6 +8,7 @@ export const createTransaction = async (req: Request, res: Response) => {
     const {
       type,
       commodity,
+      grade,
       client,
       gross_weight,
       net_weight,
@@ -16,6 +17,9 @@ export const createTransaction = async (req: Request, res: Response) => {
       num_bags,
       driver,
       amount,
+      logistics_fee,
+      handling_fee,
+      admin_fee,
     }: ITransaction = req.body
 
     if (
@@ -27,7 +31,11 @@ export const createTransaction = async (req: Request, res: Response) => {
       !net_weight ||
       !driver ||
       !truck_number ||
-      !amount
+      !amount ||
+      !logistics_fee ||
+      !admin_fee ||
+      !handling_fee ||
+      !grade
     ) {
       return res.status(400).send({
         error: true,
@@ -80,6 +88,7 @@ export const createTransaction = async (req: Request, res: Response) => {
                   Number(commodity.quantity) + Number(data.num_bags)
                 commodity.weight =
                   Number(commodity.weight) + Number(data.gross_weight)
+                commodity.grade = data.grade
                 return commodity
               } else {
                 return commodity
@@ -91,6 +100,7 @@ export const createTransaction = async (req: Request, res: Response) => {
               commodity: data.commodity,
               quantity: Number(data.num_bags),
               weight: Number(data.gross_weight),
+              grade: data.grade,
             })
             await warehouse.save()
           }
@@ -155,7 +165,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
           .sort({createdAt: -1})
           .populate("client")
           .populate("commodity")
-          .populate({path: "commodity", populate: {path: "grade"}})
+          .populate("grade")
           .populate("createdBy", {name: true})
         if (!transactions) {
           return res.status(404).send({
@@ -172,7 +182,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         .sort({createdAt: -1})
         .populate("client")
         .populate("commodity")
-        .populate({path: "commodity", populate: {path: "grade"}})
+        .populate("grade")
         .populate("createdBy", {name: true})
       if (!transactions) {
         return res.status(404).send({
@@ -191,7 +201,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         .sort({createdAt: -1})
         .populate("client")
         .populate("commodity")
-        .populate({path: "commodity", populate: {path: "grade"}})
+        .populate("grade")
         .populate("createdBy", {name: true})
       if (!transactions) {
         return res.status(404).send({
@@ -208,7 +218,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       .sort({createdAt: -1})
       .populate("client")
       .populate("commodity")
-      .populate({path: "commodity", populate: {path: "grade"}})
+      .populate("grade")
       .populate("createdBy", {name: true})
     if (!transactions) {
       return res.status(404).send({

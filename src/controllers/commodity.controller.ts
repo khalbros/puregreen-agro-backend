@@ -91,7 +91,6 @@ export const getAllApprovedCommodities = async (
   try {
     const commodities = await commodityModel
       .find({isApproved: true})
-      .populate("grade")
       .sort({createAt: -1})
     if (!commodities) {
       return res.status(404).send({
@@ -109,10 +108,7 @@ export const getAllApprovedCommodities = async (
 
 export const getAllCommodities = async (req: Request, res: Response) => {
   try {
-    const commodities = await commodityModel
-      .find()
-      .populate("grade")
-      .sort({createAt: -1})
+    const commodities = await commodityModel.find().sort({createAt: -1})
     if (!commodities) {
       return res.status(404).send({
         error: true,
