@@ -32,8 +32,6 @@ export const createTransaction = async (req: Request, res: Response) => {
       !driver ||
       !truck_number ||
       !amount ||
-      !logistics_fee ||
-      !admin_fee ||
       !handling_fee ||
       !grade
     ) {
