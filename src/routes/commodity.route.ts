@@ -2,6 +2,8 @@ import {Router} from "express"
 import {
   countCommoditiesOut,
   countCommoditiesReceived,
+  countGWByWarehouse,
+  countNWByWarehouse,
   createCommodity,
   deleteCommodity,
   getAllApprovedCommodities,
@@ -29,5 +31,7 @@ router.patch("/:id", isSuperAdminOrAdmin, updateCommodity)
 router.delete("/:id", isSuperAdmin, deleteCommodity)
 router.get("/count/received", isWarehouseManager, countCommoditiesReceived)
 router.get("/count/sent", isWarehouseManager, countCommoditiesOut)
+router.get("/count/grossweight", isLoggedIn, countGWByWarehouse)
+router.get("/count/netweight", isLoggedIn, countNWByWarehouse)
 
 export default router

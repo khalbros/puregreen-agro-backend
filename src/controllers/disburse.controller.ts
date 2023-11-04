@@ -581,21 +581,24 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?._id,
-            status: "PAID",
             project,
           })
         : await disburseModel.find({
             disbursedBy: user?._id,
-            status: "PAID",
           })
 
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
       }
-      const amount = disburse.reduce(
+      const loan_amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
         0
       )
+      const outstanding = disburse.reduce(
+        (total, d) => total + Number(d.outstanding_loan),
+        0
+      )
+      const amount = loan_amount - outstanding
       return res
         .status(200)
         .send({error: false, message: "Success", data: amount})
@@ -604,20 +607,23 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
             project,
           })
         : await disburseModel.find({
             disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
           })
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
       }
-      const amount = disburse.reduce(
+      const loan_amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
         0
       )
+      const outstanding = disburse.reduce(
+        (total, d) => total + Number(d.outstanding_loan),
+        0
+      )
+      const amount = loan_amount - outstanding
       return res
         .status(200)
         .send({error: false, message: "Success", data: amount})
@@ -629,13 +635,18 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
     }
-    const repayment = disburse.reduce(
+    const loan_amount = disburse.reduce(
       (total, d) => total + Number(d.loan_amount),
       0
     )
+    const outstanding = disburse.reduce(
+      (total, d) => total + Number(d.outstanding_loan),
+      0
+    )
+    const amount = loan_amount - outstanding
     return res
       .status(200)
-      .send({error: false, message: "Success", data: repayment})
+      .send({error: false, message: "Success", data: amount})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }
