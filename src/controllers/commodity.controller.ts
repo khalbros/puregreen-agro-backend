@@ -283,7 +283,6 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
   try {
     const userID = await currentUser(req, res)
     const user = await userModel.findById(userID?.userId).populate("warehouse")
-    const {id} = req.params
     if (!user) {
       return res.status(400).send({
         error: true,
@@ -305,13 +304,14 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
       }
 
       const commodities = warehouse.commodities
-      const grossweight = commodities.reduce((total, d) => {
+      const netweight = commodities.reduce((total, d) => {
         const p = (d.grade as any)?.percentage
-        return total + Number(d.weight)
+        const nw = d.weight - Number((Number(p) / 100) * d.weight)
+        return total + Number(nw)
       }, 0)
       return res
         .status(200)
-        .send({error: false, message: "Success", data: grossweight})
+        .send({error: false, message: "Success", data: netweight})
     }
 
     // admin users
@@ -327,13 +327,19 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
         message: "Warehouse not found",
       })
     }
-    const commodities = warehouses.map((warehouse) =>
-      warehouse.commodities.reduce((total, d) => total + Number(d.weight), 0)
-    )
-    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    const commodities = warehouses.map((warehouse) => {
+      const commodities = warehouse.commodities
+      const netweight = commodities.reduce((total, d) => {
+        const p = (d.grade as any)?.percentage
+        const nw = d.weight - Number((Number(p) / 100) * d.weight)
+        return total + Number(nw)
+      }, 0)
+      return netweight
+    })
+    const netweight = commodities.reduce((total, d) => total + Number(d), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: grossweight})
+      .send({error: false, message: "Success", data: netweight})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }
