@@ -80,8 +80,10 @@ export const createTransaction = async (req: Request, res: Response) => {
           })
           if (comm) {
             warehouse.commodities = warehouse?.commodities.map((commodity) => {
-              console.log("called")
-              if (String(commodity.commodity) === String(data.commodity)) {
+              if (
+                String(commodity.commodity) === String(data.commodity) &&
+                String(commodity.grade) === String(data.grade)
+              ) {
                 commodity.quantity =
                   Number(commodity.quantity) + Number(data.num_bags)
                 commodity.weight =

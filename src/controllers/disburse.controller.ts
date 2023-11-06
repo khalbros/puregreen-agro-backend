@@ -217,7 +217,6 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       {
         ...req.body,
         status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
-        repayment_amount: outstanding_loan > 0 ? outstanding_loan : 0,
         outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
         overage: overage > 0 ? overage : 0,
         repayedBy: user?._id,
@@ -238,7 +237,10 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     if (warehouse) {
       warehouse?.commodities?.map((comm) => {
         commodities?.map((com) => {
-          if (String(comm?.commodity) === String(com.commodity)) {
+          if (
+            String(comm?.commodity) === String(com.commodity) &&
+            String(comm?.grade) === String(com.grade)
+          ) {
             comm.quantity = comm.quantity + com.quantity
             comm.weight = comm.weight + Number(com.gross_weight)
             return comm
@@ -598,7 +600,8 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.outstanding_loan),
         0
       )
-      const amount = loan_amount - outstanding
+      const equity = disburse.reduce((total, d) => total + Number(d.equity), 0)
+      const amount = loan_amount - equity - outstanding
       return res
         .status(200)
         .send({error: false, message: "Success", data: amount})
@@ -623,7 +626,8 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.outstanding_loan),
         0
       )
-      const amount = loan_amount - outstanding
+      const equity = disburse.reduce((total, d) => total + Number(d.equity), 0)
+      const amount = loan_amount - equity - outstanding
       return res
         .status(200)
         .send({error: false, message: "Success", data: amount})
@@ -643,7 +647,8 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       (total, d) => total + Number(d.outstanding_loan),
       0
     )
-    const amount = loan_amount - outstanding
+    const equity = disburse.reduce((total, d) => total + Number(d.equity), 0)
+    const amount = loan_amount - equity - outstanding
     return res
       .status(200)
       .send({error: false, message: "Success", data: amount})
