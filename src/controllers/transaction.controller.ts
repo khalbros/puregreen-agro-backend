@@ -76,7 +76,10 @@ export const createTransaction = async (req: Request, res: Response) => {
           }
 
           const comm = warehouse?.commodities.find((commodity) => {
-            return String(commodity.commodity) === String(data.commodity)
+            return (
+              String(commodity.commodity) === String(data.commodity) &&
+              String(commodity.grade) === String(data.grade)
+            )
           })
           if (comm) {
             warehouse.commodities = warehouse?.commodities.map((commodity) => {
