@@ -1,5 +1,10 @@
 import {Request, Response} from "express"
-import {clientModel, transactionModel, warehouseModel} from "../models"
+import {
+  clientModel,
+  transactionModel,
+  userModel,
+  warehouseModel,
+} from "../models"
 import {ITransaction} from "../types/transaction"
 import {currentUser, getUserId, getUserRole} from "../utils"
 
@@ -64,53 +69,10 @@ export const createTransaction = async (req: Request, res: Response) => {
       .save()
       .then(
         async (data) => {
-          const warehouse = await warehouseModel.findOne({
-            warehouse_manager: data.createdBy,
-          })
-
-          if (!warehouse) {
-            return res.send({
-              error: true,
-              message: "Warehouse not found",
-            })
-          }
-
-          const comm = warehouse?.commodities.find((commodity) => {
-            return (
-              String(commodity.commodity) === String(data.commodity) &&
-              String(commodity.grade) === String(data.grade)
-            )
-          })
-          if (comm) {
-            warehouse.commodities = warehouse?.commodities.map((commodity) => {
-              if (
-                String(commodity.commodity) === String(data.commodity) &&
-                String(commodity.grade) === String(data.grade)
-              ) {
-                commodity.quantity =
-                  Number(commodity.quantity) + Number(data.num_bags)
-                commodity.weight =
-                  Number(commodity.weight) + Number(data.gross_weight)
-                commodity.grade = data.grade
-                return commodity
-              } else {
-                return commodity
-              }
-            }) as never
-            await warehouse.save()
-          } else {
-            warehouse.commodities.push({
-              commodity: data.commodity,
-              quantity: Number(data.num_bags),
-              weight: Number(data.gross_weight),
-              grade: data.grade,
-            })
-            await warehouse.save()
-          }
-          return res.status(201).send({
+          return res.status(200).send({
             error: false,
-            message: "transaction created successfully",
-            data,
+            message: "transaction raised",
+            data: data,
           })
         },
         (err) => {
@@ -285,6 +247,86 @@ export const updateTransaction = async (req: Request, res: Response) => {
   }
 }
 
+export const approveTransaction = async (req: Request, res: Response) => {
+  try {
+    const userID = await getUserId(req, res)
+    const user = await userModel.findById(userID)
+    const {id} = req.params
+    const {isApproved} = req.body
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const transac = await transactionModel.findByIdAndUpdate(
+      id,
+      {isApproved},
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+    if (!transac) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+    const warehouse = await warehouseModel.findOne({
+      warehouse_manager: transac.createdBy,
+    })
+
+    if (!warehouse) {
+      return res.send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+
+    const comm = warehouse?.commodities.find((commodity) => {
+      return (
+        String(commodity.commodity) === String(transac.commodity) &&
+        String(commodity.grade) === String(transac.grade)
+      )
+    })
+    if (comm) {
+      warehouse.commodities = warehouse?.commodities.map((commodity) => {
+        if (
+          String(commodity.commodity) === String(transac.commodity) &&
+          String(commodity.grade) === String(transac.grade)
+        ) {
+          commodity.quantity =
+            Number(commodity.quantity) + Number(transac.num_bags)
+          commodity.weight =
+            Number(commodity.weight) + Number(transac.gross_weight)
+          commodity.grade = transac.grade
+          return commodity
+        } else {
+          return commodity
+        }
+      }) as never
+      await warehouse.save()
+    } else {
+      warehouse.commodities.push({
+        commodity: transac.commodity,
+        quantity: Number(transac.num_bags),
+        weight: Number(transac.gross_weight),
+        grade: transac.grade,
+      })
+      await warehouse.save()
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "transaction approved", data: transac})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
@@ -297,17 +339,58 @@ export const deleteTransaction = async (req: Request, res: Response) => {
       })
     }
 
-    const transaction = await transactionModel.findByIdAndDelete(id)
-    if (!transaction) {
+    const transac = await transactionModel.findByIdAndDelete(id)
+    if (!transac) {
       return res.status(404).send({
         error: true,
         message: "Transaction not found",
       })
     }
 
+    const warehouse = await warehouseModel.findOne({
+      warehouse_manager: transac.createdBy,
+    })
+
+    if (!warehouse) {
+      return res.send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+
+    const comm = warehouse?.commodities.find((commodity) => {
+      return (
+        String(commodity.commodity) === String(transac.commodity) &&
+        String(commodity.grade) === String(transac.grade)
+      )
+    })
+    if (comm) {
+      warehouse.commodities = warehouse?.commodities.map((commodity) => {
+        if (
+          String(commodity.commodity) === String(transac.commodity) &&
+          String(commodity.grade) === String(transac.grade)
+        ) {
+          commodity.quantity =
+            Number(commodity.quantity) - Number(transac.num_bags)
+          commodity.weight =
+            Number(commodity.weight) - Number(transac.gross_weight)
+          commodity.grade = transac.grade
+          return commodity
+        } else {
+          return commodity
+        }
+      }) as never
+      await warehouse.save()
+    } else {
+      return res.send({
+        error: true,
+        message: "Commodity not found",
+      })
+    }
+
     return res
       .status(200)
-      .send({error: false, message: "Transaction Deleted", data: transaction})
+      .send({error: false, message: "Transaction Deleted", data: transac})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

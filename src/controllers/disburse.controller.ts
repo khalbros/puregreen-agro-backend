@@ -119,10 +119,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
             .findById(disbursement._id)
             .populate("farmer")
             .populate("commodities.commodity")
-            .populate({
-              path: "commodities.commodity",
-              populate: {path: "grade"},
-            })
+            .populate("commodities.grade")
             .populate("bundle")
             .populate("disbursedBy")
           return res.status(201).send({
@@ -497,7 +494,31 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
         message: "Disbursement not found",
       })
     }
+    const bundleCheck = await bundleModel.findById(disburse?.bundle)
+    if (!bundleCheck) {
+      return res.status(400).send({
+        error: true,
+        message: "Invalid Bundle selection",
+      })
+    }
+    for (const input of bundleCheck.inputs) {
+      const inputs = await inputModel.findOne({
+        name: input.input?.toLowerCase(),
+        warehouse: disburse?.warehouse,
+      })
+      if (!inputs) {
+        return res.send({
+          error: true,
+          message: `${input.input} is not available in warehouse`,
+        })
+      }
 
+      inputs.quantity = inputs.quantity + Number(input.quantity)
+      inputs.quantity_out = inputs.quantity_out
+        ? inputs.quantity_out - Number(input.quantity)
+        : 0
+      inputs.save()
+    }
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
