@@ -65,7 +65,7 @@ export const getCooperative = async (req: Request, res: Response) => {
     }
 
     const cooperative =
-      userRole != "SUPER ADMIN" && userRole != "ADMIN"
+      userRole != "SUPER ADMIN" && userRole != "DATA ANALYST"
         ? await cooperativeModel
             .findById({_id: id, isApproved: true})
             .populate("team")
@@ -238,7 +238,7 @@ export const updateCooperative = async (req: Request, res: Response) => {
       })
     }
 
-    // if (user_role !== "ADMIN" && user_role !== "SUPER ADMIN") {
+    // if (user_role !== "DATA ANALYST" && user_role !== "SUPER ADMIN") {
     //   return res.status(401).send({
     //     error: true,
     //     message: "Only admin edit cooperative data",

@@ -126,7 +126,7 @@ export const getAllDispatches = async (req: Request, res: Response) => {
   }
   const {type} = req.query
   try {
-    if (user.role === "SUPER ADMIN" || user.role === "ADMIN") {
+    if (user.role === "SUPER ADMIN" || user.role === "DATA ANALYST") {
       if (type && type != "") {
         const dispatchs = await dispatchModel
           .find({

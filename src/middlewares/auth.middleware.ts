@@ -80,7 +80,7 @@ export const isAdmin = async (
         .cookie("token", undefined, {httpOnly: true, secure: true, maxAge: 0})
         .send({error: true, message: "invalid or expired token"})
     }
-    if ((verify as IVerifedToken).role !== "ADMIN") {
+    if ((verify as IVerifedToken).role !== "DATA ANALYST") {
       return res.status(403).send({error: true, message: "Access Denied!"})
     }
     next()
@@ -202,7 +202,7 @@ export const isSuperAdminOrAdmin = async (
     }
     if (
       (verify as IVerifedToken).role !== "SUPER ADMIN" &&
-      (verify as IVerifedToken).role !== "ADMIN"
+      (verify as IVerifedToken).role !== "DATA ANALYST"
     ) {
       return res.status(403).send({
         error: true,

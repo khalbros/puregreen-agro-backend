@@ -65,7 +65,7 @@ export const getCommodity = async (req: Request, res: Response) => {
     }
 
     const commodity =
-      userRole != "SUPER ADMIN" && userRole != "ADMIN"
+      userRole != "SUPER ADMIN" && userRole != "DATA ANALYST"
         ? await commodityModel
             .findById({_id: id, isApproved: true})
             .populate("grade")
