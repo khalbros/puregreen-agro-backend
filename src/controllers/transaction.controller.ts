@@ -252,7 +252,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
     const userID = await getUserId(req, res)
     const user = await userModel.findById(userID)
     const {id} = req.params
-    const {isApproved} = req.body
+    const {status} = req.body
 
     if (!id) {
       return res.status(400).send({
@@ -263,7 +263,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
 
     const transac = await transactionModel.findByIdAndUpdate(
       id,
-      {isApproved},
+      {status},
       {
         new: true,
         runValidators: true,
@@ -272,7 +272,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
     if (!transac) {
       return res.status(404).send({
         error: true,
-        message: "Disbursement not found",
+        message: "Transaction not found",
       })
     }
     const warehouse = await warehouseModel.findOne({
