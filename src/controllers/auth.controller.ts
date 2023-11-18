@@ -160,10 +160,14 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const password = bcryptjs.hash(req.body.password, 12)
 
-    const user = await userModel.findOneAndUpdate(email, password, {
-      new: true,
-      runValidators: true,
-    })
+    const user = await userModel.findOneAndUpdate(
+      {email},
+      {password},
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
     if (!user) {
       return res.status(404).send({
         error: true,
