@@ -231,3 +231,25 @@ export const logout = async (req: Request, res: Response) => {
     return res.send({error: true, message: error?.message})
   }
 }
+
+export const resetManual = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email
+    const password = bcryptjs.hash(req.body.password, 12)
+
+    const user = await userModel.findOneAndUpdate(email, password, {
+      new: true,
+      runValidators: true,
+    })
+    if (!user) {
+      return res.status(404).send({
+        error: true,
+        message: "User not found",
+      })
+    }
+
+    return res.status(200).send({error: false, message: "Password reset"})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
