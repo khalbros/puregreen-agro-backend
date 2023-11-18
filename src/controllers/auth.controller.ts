@@ -236,11 +236,15 @@ export const resetManual = async (req: Request, res: Response) => {
   try {
     const email = req.body.email
     const password = bcryptjs.hash(req.body.password, 12)
-    const userID = await userModel.findOne(email)
-    const user = await userModel.findByIdAndUpdate(userID?._id, password, {
-      new: true,
-      runValidators: true,
-    })
+
+    const user = await userModel.findOneAndUpdate(
+      {email},
+      {password},
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
     if (!user) {
       return res.status(404).send({
         error: true,
