@@ -38,6 +38,7 @@ const warehouseSchema = new Schema(
           ref: "Commodity",
         },
         weight: {type: Number, required: true},
+        net_weight: {type: Number, required: true},
         quantity: {type: Number, required: true},
         grade: {
           type: Schema.Types.ObjectId,

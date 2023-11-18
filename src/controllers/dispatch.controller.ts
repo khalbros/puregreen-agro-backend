@@ -498,6 +498,8 @@ export const confirmDispatch = async (req: Request, res: Response) => {
               Number(commodity.quantity) - Number(dispatch.num_bags)
             commodity.weight =
               Number(commodity.weight) - Number(dispatch.gross_weight)
+            commodity.net_weight =
+              Number(commodity.net_weight) - Number(dispatch.net_weight)
           }
         })
       senderWarehouse?.save()
@@ -518,6 +520,8 @@ export const confirmDispatch = async (req: Request, res: Response) => {
               Number(commodity.quantity) + Number(dispatch.num_bags)
             commodity.weight =
               Number(commodity.weight) + Number(dispatch.gross_weight)
+            commodity.net_weight =
+              Number(commodity.net_weight) + Number(dispatch.net_weight)
           } else {
             commodity
           }
@@ -528,6 +532,7 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           commodity: dispatch.commodity,
           quantity: dispatch.num_bags as number,
           weight: Number(dispatch.gross_weight),
+          net_weight: Number(dispatch.net_weight),
         })
         await receiverWarehouse?.save()
       }

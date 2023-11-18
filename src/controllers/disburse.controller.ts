@@ -240,6 +240,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
           ) {
             comm.quantity = comm.quantity + com.quantity
             comm.weight = comm.weight + Number(com.gross_weight)
+            comm.net_weight = comm.net_weight + Number(com.net_weight)
             return comm
           } else {
             return com
@@ -349,16 +350,27 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .send({error: false, message: "Success", data: disbursement})
     }
 
-    const disbursement = await disburseModel
-      .find({project: project && project})
-      .populate("farmer")
-      .populate("commodities.commodity")
-      .populate("commodities.grade")
-      .populate("bundle")
-      .populate("disbursedBy")
-      .populate("repayedBy")
-      .sort({createdAt: -1})
-      .limit(Number(queries.limit))
+    const disbursement = project
+      ? await disburseModel
+          .find({project})
+          .populate("farmer")
+          .populate("commodities.commodity")
+          .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .sort({createdAt: -1})
+          .limit(Number(queries.limit))
+      : await disburseModel
+          .find()
+          .populate("farmer")
+          .populate("commodities.commodity")
+          .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .sort({createdAt: -1})
+          .limit(Number(queries.limit))
     if (!disbursement) {
       return res.status(404).send({
         error: true,
@@ -494,31 +506,31 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
         message: "Disbursement not found",
       })
     }
-    const bundleCheck = await bundleModel.findById(disburse?.bundle)
-    if (!bundleCheck) {
-      return res.status(400).send({
-        error: true,
-        message: "Invalid Bundle selection",
-      })
-    }
-    for (const input of bundleCheck.inputs) {
-      const inputs = await inputModel.findOne({
-        name: input.input?.toLowerCase(),
-        warehouse: disburse?.warehouse,
-      })
-      if (!inputs) {
-        return res.send({
-          error: true,
-          message: `${input.input} is not available in warehouse`,
-        })
-      }
+    // const bundleCheck = await bundleModel.findById(disburse?.bundle)
+    // if (!bundleCheck) {
+    //   return res.status(400).send({
+    //     error: true,
+    //     message: "Invalid Bundle selection",
+    //   })
+    // }
+    // for (const input of bundleCheck.inputs) {
+    //   const inputs = await inputModel.findOne({
+    //     name: input.input?.toLowerCase(),
+    //     warehouse: disburse?.warehouse,
+    //   })
+    //   if (!inputs) {
+    //     return res.send({
+    //       error: true,
+    //       message: `${input.input} is not available in warehouse`,
+    //     })
+    //   }
 
-      inputs.quantity = inputs.quantity + Number(input.quantity)
-      inputs.quantity_out = inputs.quantity_out
-        ? inputs.quantity_out - Number(input.quantity)
-        : 0
-      inputs.save()
-    }
+    //   inputs.quantity = inputs.quantity + Number(input.quantity)
+    //   inputs.quantity_out = inputs.quantity_out
+    //     ? inputs.quantity_out - Number(input.quantity)
+    //     : 0
+    //   inputs.save()
+    // }
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})

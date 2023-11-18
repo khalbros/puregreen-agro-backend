@@ -302,6 +302,8 @@ export const approveTransaction = async (req: Request, res: Response) => {
             Number(commodity.quantity) + Number(transac.num_bags)
           commodity.weight =
             Number(commodity.weight) + Number(transac.gross_weight)
+          commodity.net_weight =
+            Number(commodity.net_weight) + Number(transac.net_weight)
           commodity.grade = transac.grade
           return commodity
         } else {
@@ -314,6 +316,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
         commodity: transac.commodity,
         quantity: Number(transac.num_bags),
         weight: Number(transac.gross_weight),
+        net_weight: Number(transac.net_weight),
         grade: transac.grade,
       })
       await warehouse.save()
@@ -347,46 +350,48 @@ export const deleteTransaction = async (req: Request, res: Response) => {
       })
     }
 
-    const warehouse = await warehouseModel.findOne({
-      warehouse_manager: transac.createdBy,
-    })
+    // const warehouse = await warehouseModel.findOne({
+    //   warehouse_manager: transac.createdBy,
+    // })
 
-    if (!warehouse) {
-      return res.send({
-        error: true,
-        message: "Warehouse not found",
-      })
-    }
+    // if (!warehouse) {
+    //   return res.send({
+    //     error: true,
+    //     message: "Warehouse not found",
+    //   })
+    // }
 
-    const comm = warehouse?.commodities.find((commodity) => {
-      return (
-        String(commodity.commodity) === String(transac.commodity) &&
-        String(commodity.grade) === String(transac.grade)
-      )
-    })
-    if (comm) {
-      warehouse.commodities = warehouse?.commodities.map((commodity) => {
-        if (
-          String(commodity.commodity) === String(transac.commodity) &&
-          String(commodity.grade) === String(transac.grade)
-        ) {
-          commodity.quantity =
-            Number(commodity.quantity) - Number(transac.num_bags)
-          commodity.weight =
-            Number(commodity.weight) - Number(transac.gross_weight)
-          commodity.grade = transac.grade
-          return commodity
-        } else {
-          return commodity
-        }
-      }) as never
-      await warehouse.save()
-    } else {
-      return res.send({
-        error: true,
-        message: "Commodity not found",
-      })
-    }
+    // const comm = warehouse?.commodities.find((commodity) => {
+    //   return (
+    //     String(commodity.commodity) === String(transac.commodity) &&
+    //     String(commodity.grade) === String(transac.grade)
+    //   )
+    // })
+    // if (comm) {
+    //   warehouse.commodities = warehouse?.commodities.map((commodity) => {
+    //     if (
+    //       String(commodity.commodity) === String(transac.commodity) &&
+    //       String(commodity.grade) === String(transac.grade)
+    //     ) {
+    //       commodity.quantity =
+    //         Number(commodity.quantity) - Number(transac.num_bags)
+    //       commodity.weight =
+    //         Number(commodity.weight) - Number(transac.gross_weight)
+    //       commodity.net_weight =
+    //         Number(commodity.net_weight) - Number(transac.net_weight)
+    //       commodity.grade = transac.grade
+    //       return commodity
+    //     } else {
+    //       return commodity
+    //     }
+    //   }) as never
+    //   await warehouse.save()
+    // } else {
+    //   return res.send({
+    //     error: true,
+    //     message: "Commodity not found",
+    //   })
+    // }
 
     return res
       .status(200)
