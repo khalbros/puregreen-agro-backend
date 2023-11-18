@@ -158,7 +158,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       })
     }
 
-    const password = bcryptjs.hash(req.body.password, 12)
+    const password = await bcryptjs.hash(req.body.password, 12)
 
     const user = await userModel.findOneAndUpdate(
       {email},
@@ -200,7 +200,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
         .status(400)
         .send({error: true, message: "Email not found / invalid"})
     }
-    const otpMatch = bcryptjs.compare(user.otp as string, otp!)
+    const otpMatch = await bcryptjs.compare(user.otp as string, otp!)
 
     if (!otpMatch) {
       return res.status(400).send({error: true, message: "Wrong OTP"})
@@ -239,7 +239,7 @@ export const logout = async (req: Request, res: Response) => {
 export const resetManual = async (req: Request, res: Response) => {
   try {
     const email = req.body.email
-    const password = bcryptjs.hash(req.body.password, 12)
+    const password = await bcryptjs.hash(req.body.password, 12)
 
     const user = await userModel.findOneAndUpdate(
       {email},
