@@ -6,14 +6,14 @@ import {
   getBundle,
   updateBundle,
 } from "../controllers/bundle.controller"
-import {isAdmin, isLoggedIn, isSuperAdmin} from "../middlewares/auth.middleware"
+import {isSuperAdminOrAdmin, isLoggedIn} from "../middlewares/auth.middleware"
 
 const router: Router = Router()
 
-router.post("/", isAdmin, createBundle)
+router.post("/", isSuperAdminOrAdmin, createBundle)
 router.get("/", isLoggedIn, getAllBundles)
 router.get("/:id", isLoggedIn, getBundle)
-router.patch("/:id", isAdmin, updateBundle)
-router.delete("/:id", isAdmin, deleteBundle)
+router.patch("/:id", isSuperAdminOrAdmin, updateBundle)
+router.delete("/:id", isSuperAdminOrAdmin, deleteBundle)
 
 export default router
