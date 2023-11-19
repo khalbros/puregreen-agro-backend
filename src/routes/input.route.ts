@@ -7,15 +7,15 @@ import {
   getInputs,
   updateInput,
 } from "../controllers/input.controller"
-import {isAdmin, isLoggedIn, isSuperAdmin} from "../middlewares/auth.middleware"
+import {isLoggedIn, isSuperAdmin} from "../middlewares/auth.middleware"
 
 const router: Router = Router()
 
-router.post("/", isAdmin, createInput)
+router.post("/", isSuperAdmin, createInput)
 router.get("/", isLoggedIn, getAllInputs)
 router.get("/names", isLoggedIn, getInputs)
 router.get("/:id", isLoggedIn, getInput)
-router.patch("/:id", isAdmin, updateInput)
-router.delete("/:id", isAdmin, deleteInput)
+router.patch("/:id", isSuperAdmin, updateInput)
+router.delete("/:id", isSuperAdmin, deleteInput)
 
 export default router
