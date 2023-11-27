@@ -442,6 +442,8 @@ export const veriifyDispatch = async (req: Request, res: Response) => {
             Number(commodity.quantity) - Number(dispatch.num_bags)
           commodity.weight =
             Number(commodity.weight) - Number(dispatch.gross_weight)
+          commodity.net_weight =
+            Number(commodity.net_weight) - Number(dispatch.net_weight)
           return commodity
         } else {
           return commodity

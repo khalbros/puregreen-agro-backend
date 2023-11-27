@@ -16,6 +16,7 @@ import {
 } from "../utils"
 import {getUserId} from "../utils/index"
 import {IWarehouse} from "../types/warehouse"
+import mongoose from "mongoose"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -174,7 +175,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
         return res.status(400).send({
           error: true,
           message:
-            "Cash Loan Repayment error (some fields are empty / invalid) cash",
+            "Cash Loan Repayment error (some fields are empty / invalid)",
         })
       }
     } else {
@@ -192,8 +193,7 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
       ) {
         return res.status(400).send({
           error: true,
-          message:
-            "disbursement error (some fields are empty / invalid) grains",
+          message: "Grains repayment error (some fields are empty / invalid)",
         })
       }
     }
@@ -231,23 +231,78 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     }
     const warehouse = await warehouseModel.findById(user?.warehouse)
 
+    if (!warehouse) {
+      return res.status(400).send({
+        error: true,
+        message: "Invalid user warehouse (can't access properties)",
+      })
+    }
     if (warehouse) {
-      warehouse?.commodities?.map((comm) => {
-        commodities?.map((com) => {
-          if (
+      // if (warehouse?.commodities?.length > 0) {
+      //   warehouse?.commodities?.forEach((comm) => {
+      //     commodities?.forEach((com) => {
+      //       if (
+      //         String(comm?.commodity) === String(com.commodity) &&
+      //         String(comm?.grade) === String(com.grade)
+      //       ) {
+      //         console.log("found")
+      //         comm.quantity = comm.quantity + com.quantity
+      //         comm.weight = comm.weight + Number(com.gross_weight)
+      //         comm.net_weight = comm.net_weight + Number(com.net_weight)
+      //         return
+      //       } else {
+      //         warehouse?.commodities?.push({
+      //           quantity: com.quantity,
+      //           weight: Number(com.gross_weight),
+      //           net_weight: Number(com.net_weight),
+      //           commodity: new mongoose.Types.ObjectId(com.commodity),
+      //           grade: new mongoose.Types.ObjectId(com.grade),
+      //         })
+      //         return
+      //       }
+      //     })
+      //   })
+      //   await warehouse.save()
+      // } else {
+      //   console.log("lenght < 0")
+
+      //   commodities?.map((com) => {
+      //     warehouse?.commodities?.push({
+      //       quantity: com.quantity,
+      //       weight: Number(com.gross_weight),
+      //       net_weight: Number(com.net_weight),
+      //       commodity: new mongoose.Types.ObjectId(com.commodity),
+      //       grade: new mongoose.Types.ObjectId(com.grade),
+      //     })
+      //   })
+      //   await warehouse.save()
+      // }
+
+      for (const com of commodities!) {
+        const index = warehouse?.commodities?.findIndex(
+          (comm) =>
             String(comm?.commodity) === String(com.commodity) &&
             String(comm?.grade) === String(com.grade)
-          ) {
-            comm.quantity = comm.quantity + com.quantity
-            comm.weight = comm.weight + Number(com.gross_weight)
-            comm.net_weight = comm.net_weight + Number(com.net_weight)
-            return comm
-          } else {
-            return com
-          }
-        })
-      })
-      await warehouse.save()
+        )
+
+        if (index === -1) {
+          //push here
+          warehouse?.commodities?.push({
+            quantity: Number(com.quantity),
+            weight: Number(com.gross_weight),
+            net_weight: Number(com.net_weight),
+            commodity: new mongoose.Types.ObjectId(com.commodity),
+            grade: new mongoose.Types.ObjectId(com.grade),
+          })
+          await warehouse.save()
+        } else {
+          //update here
+          warehouse.commodities[index].quantity += Number(com.quantity)
+          warehouse.commodities[index].weight += Number(com.gross_weight)
+          warehouse.commodities[index].net_weight += Number(com.net_weight)
+          await warehouse.save()
+        }
+      }
     }
     const disbursement = await disburseModel
       .findById(disburse._id)
@@ -476,7 +531,7 @@ export const approveDisbursement = async (req: Request, res: Response) => {
       inputs.quantity_out = inputs.quantity_out
         ? inputs.quantity_out + Number(input.quantity)
         : Number(input.quantity)
-      inputs.save()
+      await inputs.save()
     }
 
     return res

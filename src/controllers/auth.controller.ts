@@ -184,7 +184,6 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const verifyOtp = async (req: Request, res: Response) => {
   const {otp} = req.body
   const email = req.cookies.user
-  console.log(req.body)
 
   if (!otp) {
     return res.status(400).send({
@@ -200,7 +199,8 @@ export const verifyOtp = async (req: Request, res: Response) => {
         .status(400)
         .send({error: true, message: "Email not found / invalid"})
     }
-    const otpMatch = await bcryptjs.compare(user.otp as string, otp!)
+    const otpMatch = await bcryptjs.compare(otp as string, user?.otp as string)
+    console.log(otpMatch)
 
     if (!otpMatch) {
       return res.status(400).send({error: true, message: "Wrong OTP"})
