@@ -17,6 +17,7 @@ import {
 import {getUserId} from "../utils/index"
 import {IWarehouse} from "../types/warehouse"
 import mongoose from "mongoose"
+import {IFarmer} from "../types/farmer"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -338,6 +339,10 @@ export const getDisbursement = async (req: Request, res: Response) => {
       .populate("commodities.commodity")
       .populate("commodities.grade")
       .populate("bundle")
+      .populate("disbursedBy")
+      .populate("repayedBy")
+      .populate("warehouse")
+      .populate("project")
     if (!disburse) {
       return res.status(404).send({
         error: true,
@@ -371,6 +376,8 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .populate("bundle")
         .populate("disbursedBy")
         .populate("repayedBy")
+        .populate("warehouse")
+        .populate("project")
         .sort({createdAt: -1})
         .limit(Number(queries.limit))
       if (!disbursement) {
@@ -392,6 +399,8 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .populate("bundle")
         .populate("disbursedBy")
         .populate("repayedBy")
+        .populate("warehouse")
+        .populate("project")
         .sort({createdAt: -1})
         .limit(Number(queries.limit))
       if (!disbursement) {
@@ -414,6 +423,8 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           .populate("bundle")
           .populate("disbursedBy")
           .populate("repayedBy")
+          .populate("warehouse")
+          .populate("project")
           .sort({createdAt: -1})
           .limit(Number(queries.limit))
       : await disburseModel
@@ -424,7 +435,8 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           .populate("bundle")
           .populate("disbursedBy")
           .populate("repayedBy")
-          .sort({createdAt: -1})
+          .populate("warehouse")
+          .populate("project")
           .limit(Number(queries.limit))
     if (!disbursement) {
       return res.status(404).send({
@@ -451,14 +463,23 @@ export const updateDisbursement = async (req: Request, res: Response) => {
       })
     }
 
-    const disburse = await disburseModel.findByIdAndUpdate(
-      id,
-      {...req.body},
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
+    const disburse = await disburseModel
+      .findByIdAndUpdate(
+        id,
+        {...req.body},
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .populate("farmer")
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .populate("bundle")
+      .populate("disbursedBy")
+      .populate("repayedBy")
+      .populate("warehouse")
+      .populate("project")
     if (!disburse) {
       return res.status(404).send({
         error: true,
