@@ -26,6 +26,7 @@ export interface IDisburse {
   processing_fee?: number
   status?: string
   isApproved?: boolean
+  isEquityPaid?: boolean
   disbursedBy?: string
   repayedBy?: string
   repayment_type?: string

@@ -6,6 +6,8 @@ import mongoose from "mongoose"
 import imageUpload from "../utils/file-upload"
 import {UploadedFile} from "express-fileupload"
 import {IWarehouse} from "../types/warehouse"
+import {IRegister} from "../types/registration"
+import {registerModel} from "../models/registeration.model"
 
 async function fileUpload(file: UploadedFile) {
   const filepath = `uploads/${Date.now() + "_" + file?.name}`
@@ -371,6 +373,238 @@ export const getAllApprovedFarmers = async (req: Request, res: Response) => {
     }
     const farmers = await farmerModel
       .find({isApproved: true})
+      .populate("field_officer")
+      .populate("cooperative")
+      .populate("supervisor")
+      .populate({
+        path: "cooperative",
+        populate: {path: "team"},
+      })
+      .sort({createdAt: -1})
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: farmers})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const getAllPaidFarmers = async (req: Request, res: Response) => {
+  const cuser = await currentUser(req, res)
+
+  const query = req.query
+  try {
+    const user = await userModel.findById(cuser?.userId).populate("warehouse")
+
+    if (query) {
+      if (query.limit) {
+        if (user?.role === "WAREHOUSE ADMIN") {
+          const farmers = await farmerModel
+            .find({
+              ...query,
+              supervisor: user?._id,
+              isPaid: true,
+            })
+            .populate("field_officer")
+            .populate("supervisor")
+            .populate("cooperative")
+            .populate({
+              path: "cooperative",
+              populate: {path: "team"},
+            })
+            .sort({createdAt: -1})
+            .limit(Number(query.limit))
+          return res
+            .status(200)
+            .send({error: false, message: "Success", data: farmers})
+        }
+        if (user?.role === "FIELD OFFICER") {
+          const farmers = await farmerModel
+            .find({
+              ...query,
+              field_officer: user?._id,
+              isPaid: true,
+            })
+            .populate("field_officer")
+            .populate("cooperative")
+            .populate("supervisor")
+            .populate({
+              path: "cooperative",
+              populate: {path: "team"},
+            })
+            .sort({createdAt: -1})
+            .limit(Number(query.limit))
+          return res
+            .status(200)
+            .send({error: false, message: "Success", data: farmers})
+        }
+        if (user?.role === "WAREHOUSE MANAGER") {
+          const farmers = await farmerModel
+            .find({
+              supervisor: {$in: (user?.warehouse as any)?.supervisors},
+              isPaid: true,
+              ...query,
+            })
+            .populate("field_officer")
+            .populate("supervisor")
+            .populate("cooperative")
+            .populate({
+              path: "cooperative",
+              populate: {path: "team"},
+            })
+            .sort({createdAt: -1})
+            .limit(Number(query.limit))
+          return res
+            .status(200)
+            .send({error: false, message: "Success", data: farmers})
+        }
+        const farmers = await farmerModel
+          .find({isPaid: true, ...query})
+          .populate("field_officer")
+          .populate("cooperative")
+          .populate("supervisor")
+          .populate({
+            path: "cooperative",
+            populate: {path: "team"},
+          })
+          .sort({createdAt: -1})
+          .limit(Number(query.limit))
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: farmers})
+      }
+      if (user?.role === "WAREHOUSE ADMIN") {
+        const farmers = await farmerModel
+          .find({
+            ...query,
+            supervisor: user?._id,
+            isPaid: true,
+          })
+          .populate("field_officer")
+          .populate("supervisor")
+          .populate("cooperative")
+          .populate({
+            path: "cooperative",
+            populate: {path: "team"},
+          })
+          .sort({createdAt: -1})
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: farmers})
+      }
+      if (user?.role === "FIELD OFFICER") {
+        const farmers = await farmerModel
+          .find({
+            ...query,
+            field_officer: user?._id,
+            isPaid: true,
+          })
+          .populate("field_officer")
+          .populate("cooperative")
+          .populate("supervisor")
+          .populate({
+            path: "cooperative",
+            populate: {path: "team"},
+          })
+          .sort({createdAt: -1})
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: farmers})
+      }
+      if (user?.role === "WAREHOUSE MANAGER") {
+        const farmers = await farmerModel
+          .find({
+            supervisor: {$in: (user?.warehouse as any)?.supervisors},
+            isPaid: true,
+            ...query,
+          })
+          .populate("field_officer")
+          .populate("supervisor")
+          .populate("cooperative")
+          .populate({
+            path: "cooperative",
+            populate: {path: "team"},
+          })
+          .sort({createdAt: -1})
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: farmers})
+      }
+      const farmers = await farmerModel
+        .find({
+          ...query,
+          isPaid: true,
+        })
+        .populate("field_officer")
+        .populate("supervisor")
+        .populate("cooperative")
+        .populate({
+          path: "cooperative",
+          populate: {path: "team"},
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const farmers = await farmerModel
+        .find({
+          supervisor: {$in: (user?.warehouse as any)?.supervisors},
+          isPaid: true,
+        })
+        .populate("field_officer")
+        .populate("supervisor")
+        .populate("cooperative")
+        .populate({
+          path: "cooperative",
+          populate: {path: "team"},
+        })
+        .sort({createdAt: -1})
+
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const farmers = await farmerModel
+        .find({
+          supervisor: user?._id,
+          isPaid: true,
+        })
+        .populate("field_officer")
+        .populate("supervisor")
+        .populate("cooperative")
+        .populate({
+          path: "cooperative",
+          populate: {path: "team"},
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    if (user?.role === "FIELD OFFICER") {
+      const farmers = await farmerModel
+        .find({
+          field_officer: user?._id,
+          isPaid: true,
+        })
+        .populate("field_officer")
+        .populate("supervisor")
+        .populate("cooperative")
+        .populate({
+          path: "cooperative",
+          populate: {path: "team"},
+        })
+        .sort({createdAt: -1})
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: farmers})
+    }
+    const farmers = await farmerModel
+      .find({isPaid: true})
       .populate("field_officer")
       .populate("cooperative")
       .populate("supervisor")
@@ -922,6 +1156,164 @@ export const countFarmers = async (req: Request, res: Response) => {
     return res
       .status(200)
       .send({error: false, message: "Success", data: farmers})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+// registration
+
+export const registrationPayment = async (req: Request, res: Response) => {
+  try {
+    const cuser = await getUserId(req, res)
+    const user = await userModel.findById(cuser)
+
+    const {farmer, amount_paid}: IRegister = req.body
+
+    if (!farmer || !amount_paid) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (some fields are empty / invalid)",
+      })
+    }
+
+    const farmaerCheck = await farmerModel.findOne({farmer_id: farmer})
+    if (!farmaerCheck)
+      return res.status(404).send({error: true, message: `Farmer Not Found`})
+
+    const newFarmer = await registerModel.create({
+      farmer: farmaerCheck._id,
+      amount_paid,
+      status: true,
+      paid_by: user?._id,
+    })
+
+    newFarmer
+      .save()
+      .then(
+        async () => {
+          farmaerCheck.isPaid = true
+          await farmaerCheck.save()
+          return res
+            .status(201)
+            .send({error: false, message: "Payment successfully"})
+        },
+        (err) => {
+          return res.send({error: true, message: err?.message})
+        }
+      )
+      .catch((err) => {
+        return res.send({error: true, message: err?.message})
+      })
+  } catch (error: any) {
+    return res.send({error: true, message: error?.message})
+  }
+}
+
+export const updatePayment = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const farmer = await registerModel.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    })
+    if (!farmer) {
+      return res.status(404).send({
+        error: true,
+        message: "Not found",
+      })
+    }
+
+    return res.status(200).send({
+      error: false,
+      message: "Payment Updated Successfully",
+      data: farmer,
+    })
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const deletePayment = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query (No ID found)",
+      })
+    }
+
+    const payment = await registerModel.findByIdAndDelete(id)
+    if (!payment) {
+      return res.status(404).send({
+        error: true,
+        message: "payment not found",
+      })
+    }
+
+    const farmer = await farmerModel.findById(payment.farmer)
+    if (farmer) {
+      farmer.isPaid = false
+      await farmer?.save()
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Deleted Successfully", data: payment})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countFees = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId)
+  const {project} = req.query
+  try {
+    if (user?.role === "FINANCIAL OFFICER") {
+      const disburse = project
+        ? await registerModel.find({
+            paid_by: user?._id,
+          })
+        : await registerModel.find({
+            paid_by: user?._id,
+          })
+
+      if (!disburse) {
+        return res.status(200).send({error: false, message: "not found"})
+      }
+      const netweight = disburse.reduce(
+        (total, d) => total + Number(d.amount_paid),
+        0
+      )
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: netweight})
+    }
+
+    const disburse = project
+      ? await registerModel.find({project})
+      : await registerModel.find()
+
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const netweight = disburse.reduce(
+      (total, d) => total + Number(d.amount_paid),
+      0
+    )
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: netweight})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

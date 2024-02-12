@@ -76,6 +76,7 @@ const disburseSchema = new Schema(
       default: "NOT PAID",
     },
     isApproved: {type: Boolean, default: false},
+    isEquityPaid: {type: Boolean, default: false},
     warehouse: {
       type: Schema.Types.ObjectId,
       ref: "Warehouse",

@@ -28,6 +28,7 @@ export interface IFarmer {
   field_officer?: string
   supervisor?: string
   isApproved?: boolean
+  isPaid?: boolean
   createdAt?: string
   updatedAt?: string
 }
