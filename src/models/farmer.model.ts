@@ -102,6 +102,12 @@ const farmerSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    reg_amount: {
+      type: Number,
+    },
+    equity_amount: {
+      type: Number,
+    },
     isApproved: {
       type: Boolean,
       default: false,

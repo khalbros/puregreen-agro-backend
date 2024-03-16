@@ -33,6 +33,8 @@ export const equityPayment = async (req: Request, res: Response) => {
       .save()
       .then(
         async () => {
+          farmaerCheck.equity_amount = amount_paid
+          await farmaerCheck.save()
           return res
             .status(201)
             .send({error: false, message: "Payment successfully"})
@@ -62,12 +64,14 @@ export const getEquity = async (req: Request, res: Response) => {
             })
             .populate("farmer")
             .populate("paid_by")
+            .sort({createdAt: -1})
         : await equityModel
             .find({
               paid_by: user?._id,
             })
             .populate("farmer")
             .populate("paid_by")
+            .sort({createdAt: -1})
 
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
@@ -79,8 +83,16 @@ export const getEquity = async (req: Request, res: Response) => {
     }
 
     const disburse = project
-      ? await equityModel.find({project}).populate("farmer").populate("paid_by")
-      : await equityModel.find().populate("farmer").populate("paid_by")
+      ? await equityModel
+          .find({project})
+          .populate("farmer")
+          .populate("paid_by")
+          .sort({createdAt: -1})
+      : await equityModel
+          .find()
+          .populate("farmer")
+          .populate("paid_by")
+          .sort({createdAt: -1})
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
@@ -114,6 +126,12 @@ export const updateEquityPayment = async (req: Request, res: Response) => {
         error: true,
         message: "Not found",
       })
+    }
+    const farmaerCheck = await farmerModel.findOne({_id: farmer.farmer})
+    if (farmaerCheck) {
+      farmaerCheck.equity_amount = farmer?.amount_paid
+
+      await farmaerCheck.save()
     }
 
     return res.status(200).send({

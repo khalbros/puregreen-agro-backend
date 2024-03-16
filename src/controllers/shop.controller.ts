@@ -1,19 +1,19 @@
 import {Request, Response} from "express"
-import {warehouseModel} from "../models"
-import {IWarehouse} from "../types/warehouse"
+import {shopModel} from "../models"
+import {IShop} from "../types/shop"
 import {getUserRole} from "../utils"
 
-export const createWarehouse = async (req: Request, res: Response) => {
+export const createShop = async (req: Request, res: Response) => {
   try {
     const user_role = await getUserRole(req, res)
     if (!user_role) {
       return res.status(403).send({error: true, message: "Access Denied!"})
     }
-    if (user_role !== "SUPER ADMIN") {
+    if (user_role !== "SUPER ADMIN" && user_role !== "DATA ANALYST") {
       return res.status(403).send({error: true, message: "Access Denied!"})
     }
 
-    const {name, capacity, state, lga, address}: IWarehouse = req.body
+    const {name, capacity, state, lga, address}: IShop = req.body
 
     if (!name || !capacity || !state || !lga || !address) {
       return res.status(400).send({
@@ -21,13 +21,11 @@ export const createWarehouse = async (req: Request, res: Response) => {
         message: "inputs error (some fields are empty / invalid)",
       })
     }
-    const nameCheck = await warehouseModel.findOne({name: name.toLowerCase()})
+    const nameCheck = await shopModel.findOne({name: name.toLowerCase()})
     if (nameCheck)
-      return res
-        .status(400)
-        .send({error: true, message: "warehouse already exist"})
+      return res.status(400).send({error: true, message: "shop already exist"})
 
-    const newWarehouse = await warehouseModel.create({
+    const newShop = await shopModel.create({
       name: name.toLowerCase(),
       capacity,
       state: state.toLowerCase(),
@@ -35,13 +33,13 @@ export const createWarehouse = async (req: Request, res: Response) => {
       address: address.toLowerCase(),
     })
 
-    newWarehouse
+    newShop
       .save()
       .then(
         () => {
           return res
             .status(201)
-            .send({error: false, message: "warehouse created successfully"})
+            .send({error: false, message: "shop created successfully"})
         },
         (err) => {
           return res.send({error: true, message: err?.message})
@@ -55,7 +53,7 @@ export const createWarehouse = async (req: Request, res: Response) => {
   }
 }
 
-export const getWarehouse = async (req: Request, res: Response) => {
+export const getShop = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
     if (!id) {
@@ -65,48 +63,38 @@ export const getWarehouse = async (req: Request, res: Response) => {
       })
     }
 
-    const warehouse = await warehouseModel
-      .findById(id)
-      .populate("warehouse_manager")
-      .populate("supervisors")
-      .populate({path: "supervisors", populate: {path: "field_officers"}})
-    if (!warehouse) {
+    const shop = await shopModel.findById(id).populate("sales_manager")
+
+    if (!shop) {
       return res.status(404).send({
         error: true,
-        message: "Warehouse not found",
+        message: "Shop not found",
       })
     }
 
-    return res
-      .status(200)
-      .send({error: false, message: "Success", data: warehouse})
+    return res.status(200).send({error: false, message: "Success", data: shop})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }
 }
 
-export const getAllWarehouses = async (req: Request, res: Response) => {
+export const getAllShops = async (req: Request, res: Response) => {
   try {
-    const warehouses = await warehouseModel
-      .find()
-      .populate("warehouse_manager")
-      .populate("supervisors")
-      .populate({path: "supervisors", populate: {path: "field_officers"}})
-    if (!warehouses) {
+    const shops = await shopModel.find().populate("sales_manager")
+
+    if (!shops) {
       return res.status(404).send({
         error: true,
-        message: "Warehouse not found",
+        message: "Shop not found",
       })
     }
-    return res
-      .status(200)
-      .send({error: false, message: "Success", data: warehouses})
+    return res.status(200).send({error: false, message: "Success", data: shops})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }
 }
 
-export const updateWarehouse = async (req: Request, res: Response) => {
+export const updateShop = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
     const user_role = await getUserRole(req, res)
@@ -118,33 +106,33 @@ export const updateWarehouse = async (req: Request, res: Response) => {
       })
     }
 
-    if (user_role !== "SUPER ADMIN") {
+    if (user_role !== "SUPER ADMIN" && user_role !== "DATA ANALYST") {
       return res.status(403).send({
         error: true,
-        message: "Only Super admin can edit warehouse data",
+        message: "Only Super admin can edit shop data",
       })
     }
 
-    const warehouse = await warehouseModel.findByIdAndUpdate(id, req.body, {
+    const shop = await shopModel.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
     })
-    if (!warehouse) {
+    if (!shop) {
       return res.status(404).send({
         error: true,
-        message: "Warehouse not found",
+        message: "Shop not found",
       })
     }
 
     return res
       .status(200)
-      .send({error: false, message: "Warehouse updated", data: warehouse})
+      .send({error: false, message: "Shop updated", data: shop})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }
 }
 
-export const deleteWarehouse = async (req: Request, res: Response) => {
+export const deleteShop = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
     const user_role = await getUserRole(req, res)
@@ -156,24 +144,24 @@ export const deleteWarehouse = async (req: Request, res: Response) => {
       })
     }
 
-    if (user_role !== "SUPER ADMIN") {
+    if (user_role !== "SUPER ADMIN" && user_role !== "DATA ANALYST") {
       return res.status(403).send({
         error: true,
-        message: "Only Super admin can delete warehouse data",
+        message: "Only Super admin can delete shop data",
       })
     }
 
-    const warehouse = await warehouseModel.findByIdAndDelete(id)
-    if (!warehouse) {
+    const shop = await shopModel.findByIdAndDelete(id)
+    if (!shop) {
       return res.status(404).send({
         error: true,
-        message: "Warehouse not found",
+        message: "Shop not found",
       })
     }
 
     return res
       .status(200)
-      .send({error: false, message: "Warehouse Deleted", data: warehouse})
+      .send({error: false, message: "Shop Deleted", data: shop})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

@@ -18,6 +18,8 @@ import teamRouter from "./routes/team.route"
 import visitationRouter from "./routes/visitation.route"
 import disbursementRouter from "./routes/disburse.route"
 import paymentRouter from "./routes/payment.route"
+import shopRouter from "./routes/shop.route"
+import stockRouter from "./routes/stock.route"
 import fileUploader from "express-fileupload"
 const app: Application = express()
 
@@ -53,6 +55,8 @@ app.use("/api/project", projectRouter)
 app.use("/api/team", teamRouter)
 app.use("/api/visitation", visitationRouter)
 app.use("/api/payment", paymentRouter)
+app.use("/api/shop", shopRouter)
+app.use("/api/stock", stockRouter)
 
 app.use("/uploads", express.static("uploads"))
 app.get("/*", (req: Request, res: Response) => res.send("Hello World"))
