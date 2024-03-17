@@ -18,6 +18,7 @@ import {getUserId} from "../utils/index"
 import {IWarehouse} from "../types/warehouse"
 import mongoose from "mongoose"
 import {IFarmer} from "../types/farmer"
+import {equityModel} from "../models/equity.model"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -63,6 +64,17 @@ export const loanDisbursement = async (req: Request, res: Response) => {
         message: "error invalid farmer",
       })
     }
+
+    const equityCheck = await equityModel.findOne({
+      $and: [{farmer: farmerCheck?._id}, {status: true}],
+    })
+    if (!equityCheck) {
+      return res.status(400).send({
+        error: true,
+        message: "No Equity Paid For This Farmer",
+      })
+    }
+
     const loanCheck = await disburseModel.findOne({
       $and: [{farmer: farmerCheck?._id}, {status: "NOT PAID"}],
     })
