@@ -54,7 +54,7 @@ export const equityPayment = async (req: Request, res: Response) => {
 export const getEquity = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId)
-  const {project} = req.query
+  const {project, farmer} = req.query
   try {
     if (user?.role === "FINANCIAL OFFICER") {
       const disburse = project
@@ -88,6 +88,11 @@ export const getEquity = async (req: Request, res: Response) => {
           .populate("farmer")
           .populate("paid_by")
           .sort({createdAt: -1})
+      : farmer
+      ? await equityModel
+          .findOne({farmer})
+          .populate("farmer")
+          .populate("paid_by")
       : await equityModel
           .find()
           .populate("farmer")
