@@ -160,12 +160,25 @@ export const deleteEquityPayment = async (req: Request, res: Response) => {
     }
 
     const payment = await equityModel.findByIdAndDelete(id)
+
     if (!payment) {
       return res.status(404).send({
         error: true,
         message: "payment not found",
       })
     }
+    const farmer = await farmerModel.findById(payment.farmer)
+
+    if (!farmer) {
+      return res.status(404).send({
+        error: true,
+        message: "farmer not found",
+      })
+    }
+    console.log(farmer)
+
+    farmer.equity_amount = undefined
+    farmer.save()
 
     return res
       .status(200)

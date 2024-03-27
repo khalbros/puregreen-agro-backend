@@ -1081,6 +1081,7 @@ export const deletePayment = async (req: Request, res: Response) => {
     const farmer = await farmerModel.findById(payment.farmer)
     if (farmer) {
       farmer.isPaid = false
+      farmer.reg_amount = undefined
       await farmer?.save()
     }
 
