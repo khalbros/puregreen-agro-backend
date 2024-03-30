@@ -399,6 +399,14 @@ export const getAllPaidFarmers = async (req: Request, res: Response) => {
         const farmers = await registerModel
           .find({status: true, ...query})
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "field_officer", populate: "warehouse"},
+          })
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
           .populate("paid_by")
           .sort({createdAt: -1})
           .limit(Number(query.limit))
@@ -413,6 +421,14 @@ export const getAllPaidFarmers = async (req: Request, res: Response) => {
           status: true,
         })
         .populate("farmer")
+        .populate({
+          path: "farmer",
+          populate: {path: "field_officer", populate: "warehouse"},
+        })
+        .populate({
+          path: "farmer",
+          populate: {path: "cooperative"},
+        })
         .populate("paid_by")
         .sort({createdAt: -1})
       return res
@@ -423,6 +439,14 @@ export const getAllPaidFarmers = async (req: Request, res: Response) => {
     const farmers = await registerModel
       .find({status: true})
       .populate("farmer")
+      .populate({
+        path: "farmer",
+        populate: {path: "field_officer", populate: "warehouse"},
+      })
+      .populate({
+        path: "farmer",
+        populate: {path: "cooperative"},
+      })
       .populate("paid_by")
       .sort({createdAt: -1})
     return res
@@ -726,6 +750,7 @@ export const updateFarmer = async (req: Request, res: Response) => {
       new: true,
       runValidators: true,
     })
+
     if (!farmer) {
       return res.status(404).send({
         error: true,

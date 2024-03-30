@@ -63,6 +63,14 @@ export const getEquity = async (req: Request, res: Response) => {
               paid_by: user?._id,
             })
             .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: {path: "field_officer", populate: "warehouse"},
+            })
+            .populate({
+              path: "farmer",
+              populate: {path: "cooperative"},
+            })
             .populate("paid_by")
             .sort({createdAt: -1})
         : await equityModel
@@ -70,6 +78,14 @@ export const getEquity = async (req: Request, res: Response) => {
               paid_by: user?._id,
             })
             .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: {path: "cooperative"},
+            })
+            .populate({
+              path: "farmer",
+              populate: {path: "field_officer", populate: "warehouse"},
+            })
             .populate("paid_by")
             .sort({createdAt: -1})
 
@@ -86,16 +102,40 @@ export const getEquity = async (req: Request, res: Response) => {
       ? await equityModel
           .find({project})
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
+          .populate({
+            path: "farmer",
+            populate: {path: "field_officer", populate: "warehouse"},
+          })
           .populate("paid_by")
           .sort({createdAt: -1})
       : farmer
       ? await equityModel
           .findOne({farmer})
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
+          .populate({
+            path: "farmer",
+            populate: {path: "field_officer", populate: "warehouse"},
+          })
           .populate("paid_by")
       : await equityModel
           .find()
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
+          .populate({
+            path: "farmer",
+            populate: {path: "field_officer", populate: "warehouse"},
+          })
           .populate("paid_by")
           .sort({createdAt: -1})
 
@@ -175,7 +215,6 @@ export const deleteEquityPayment = async (req: Request, res: Response) => {
         message: "farmer not found",
       })
     }
-    console.log(farmer)
 
     farmer.equity_amount = undefined
     farmer.save()
