@@ -18,6 +18,10 @@ const dispatchSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Commodity",
     },
+    input: {
+      type: Schema.Types.ObjectId,
+      ref: "Input",
+    },
     gross_weight: {
       type: String,
       required: [true, "weight is missing"],

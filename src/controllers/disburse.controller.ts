@@ -56,7 +56,6 @@ export const loanDisbursement = async (req: Request, res: Response) => {
 
     const farmerCheck = await farmerModel.findOne({
       farmer_id: farmer,
-      supervisor: userID,
     })
     if (!farmerCheck) {
       return res.status(400).send({
@@ -66,7 +65,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
 
     const equityCheck = await equityModel.findOne({
-      $and: [{farmer: farmerCheck?._id}, {status: true}],
+      $and: [{farmer: farmerCheck?._id}, {status: "PAID"}],
     })
     if (!equityCheck) {
       return res.status(400).send({
@@ -132,6 +131,10 @@ export const loanDisbursement = async (req: Request, res: Response) => {
           const disburse = await disburseModel
             .findById(disbursement._id)
             .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: {path: "cooperative"},
+            })
             .populate("commodities.commodity")
             .populate("commodities.grade")
             .populate("bundle")
@@ -320,6 +323,10 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
     const disbursement = await disburseModel
       .findById(disburse._id)
       .populate("farmer")
+      .populate({
+        path: "farmer",
+        populate: {path: "cooperative"},
+      })
       .populate("commodities.commodity")
       .populate("commodities.grade")
       .populate("bundle")
@@ -348,6 +355,10 @@ export const getDisbursement = async (req: Request, res: Response) => {
     const disburse = await disburseModel
       .findById(id)
       .populate("farmer")
+      .populate({
+        path: "farmer",
+        populate: {path: "cooperative"},
+      })
       .populate("commodities.commodity")
       .populate("commodities.grade")
       .populate("bundle")
@@ -383,6 +394,10 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
         })
         .populate("farmer")
+        .populate({
+          path: "farmer",
+          populate: {path: "cooperative"},
+        })
         .populate("commodities.commodity")
         .populate("commodities.grade")
         .populate("bundle")
@@ -406,6 +421,10 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       const disbursement = await disburseModel
         .find({disbursedBy: user?._id})
         .populate("farmer")
+        .populate({
+          path: "farmer",
+          populate: {path: "cooperative"},
+        })
         .populate("commodities.commodity")
         .populate("commodities.grade")
         .populate("bundle")
@@ -430,6 +449,10 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       ? await disburseModel
           .find({project})
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
           .populate("commodities.commodity")
           .populate("commodities.grade")
           .populate("bundle")
@@ -442,6 +465,10 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       : await disburseModel
           .find()
           .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: {path: "cooperative"},
+          })
           .populate("commodities.commodity")
           .populate("commodities.grade")
           .populate("bundle")

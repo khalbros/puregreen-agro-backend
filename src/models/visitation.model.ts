@@ -29,7 +29,6 @@ const visitationSchema = new Schema(
     },
     upload: {
       type: String,
-      required: true,
     },
     visited_by: {
       type: Schema.Types.ObjectId,

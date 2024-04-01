@@ -98,7 +98,13 @@ export const getVisitation = async (req: Request, res: Response) => {
       })
     }
 
-    const visitation = await visitationModel.findById(id).populate("visited_by")
+    const visitation = await visitationModel
+      .findById(id)
+      .populate("visited_by")
+      .populate({
+        path: "visited_by",
+        populate: {path: "warehouse"},
+      })
     if (!visitation) {
       return res.status(404).send({
         error: true,
@@ -121,6 +127,10 @@ export const getAllVisitations = async (req: Request, res: Response) => {
       const visitations = await visitationModel
         .find({visited_by: user.userId})
         .populate("visited_by")
+        .populate({
+          path: "visited_by",
+          populate: {path: "warehouse"},
+        })
         .sort({createdAt: -1})
       if (!visitations) {
         return res.status(404).send({
@@ -135,6 +145,10 @@ export const getAllVisitations = async (req: Request, res: Response) => {
     const visitations = await visitationModel
       .find()
       .populate("visited_by")
+      .populate({
+        path: "visited_by",
+        populate: {path: "warehouse"},
+      })
       .sort({createdAt: -1})
     if (!visitations) {
       return res.status(404).send({
