@@ -745,11 +745,26 @@ export const updateFarmer = async (req: Request, res: Response) => {
         message: "Error Please pass an ID to query",
       })
     }
+    const {profile_img, id_card, guarantor_id} = req.body
 
-    const farmer = await farmerModel.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    })
+    const farmer = await farmerModel.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        profile_img:
+          profile_img &&
+          profile_img !== "undefined" &&
+          (await imageUpload(profile_img)),
+        id_card:
+          id_card && id_card !== "undefined" && (await imageUpload(id_card)),
+        guarantor_id:
+          guarantor_id !== "undefined" && (await imageUpload(guarantor_id)),
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
 
     if (!farmer) {
       return res.status(404).send({
