@@ -21,11 +21,6 @@ async function fileUpload(file: UploadedFile) {
 }
 
 export const createFarmer = async (req: Request, res: Response) => {
-  const profile_img = req.files?.profile_img
-  const id_card = req.files?.id_card
-  const guarantor_id = req.files?.guarantor_id
-
-  const env = process.env.NODE_ENV
   try {
     const {
       name,
@@ -47,6 +42,14 @@ export const createFarmer = async (req: Request, res: Response) => {
       guarantor_id_number,
       guarantor_address,
     }: IFarmer = req.body
+    const profile_img = req.files?.profile_img
+    const id_card = req.files?.id_card
+    const guarantor_id = req.files?.guarantor_id
+
+    console.log(req.body)
+    console.log(profile_img)
+    console.log(id_card)
+    console.log(guarantor_id)
 
     if (
       !name ||
