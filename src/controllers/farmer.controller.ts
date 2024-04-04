@@ -21,9 +21,9 @@ async function fileUpload(file: UploadedFile) {
 }
 
 export const createFarmer = async (req: Request, res: Response) => {
-  // const profile_img = req.files?.profile_img
-  // const id_card = req.files?.id_card
-  // const guarantor_id = req.files?.guarantor_id
+  const profile_img = req.files?.profile_img
+  const id_card = req.files?.id_card
+  const guarantor_id = req.files?.guarantor_id
 
   const env = process.env.NODE_ENV
   try {
@@ -46,9 +46,6 @@ export const createFarmer = async (req: Request, res: Response) => {
       guarantor_id_type,
       guarantor_id_number,
       guarantor_address,
-      id_card,
-      guarantor_id,
-      profile_img,
     }: IFarmer = req.body
 
     if (
@@ -738,6 +735,9 @@ export const unVerifiedFarmers = async (req: Request, res: Response) => {
 export const updateFarmer = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
+    const profile_img = req.files?.profile_img
+    const id_card = req.files?.id_card
+    const guarantor_id = req.files?.guarantor_id
 
     if (!id) {
       return res.status(400).send({
@@ -745,20 +745,15 @@ export const updateFarmer = async (req: Request, res: Response) => {
         message: "Error Please pass an ID to query",
       })
     }
-    const {profile_img, id_card, guarantor_id} = req.body
+    // const {profile_img, id_card, guarantor_id} = req.body
 
     const farmer = await farmerModel.findByIdAndUpdate(
       id,
       {
         ...req.body,
-        profile_img:
-          profile_img &&
-          profile_img !== "undefined" &&
-          (await imageUpload(profile_img)),
-        id_card:
-          id_card && id_card !== "undefined" && (await imageUpload(id_card)),
-        guarantor_id:
-          guarantor_id !== "undefined" && (await imageUpload(guarantor_id)),
+        profile_img: profile_img && (await imageUpload(profile_img)),
+        id_card: id_card && (await imageUpload(id_card)),
+        guarantor_id: guarantor_id && (await imageUpload(guarantor_id)),
       },
       {
         new: true,

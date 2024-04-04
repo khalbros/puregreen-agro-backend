@@ -1,4 +1,5 @@
 import {v2 as cloudinary} from "cloudinary"
+import sharp from "sharp"
 
 export default async function imageUpload(file: any): Promise<string> {
   cloudinary.config({
@@ -9,23 +10,31 @@ export default async function imageUpload(file: any): Promise<string> {
   })
 
   try {
-    return await new Promise((resolve, reject) => {
-      const result = cloudinary.uploader.upload(
-        file,
-        {
-          folder: "puregreen-agro",
-          invalidate: true,
-          overwrite: true,
-        },
-        function (err, result) {
-          if (result) {
-            resolve(result.secure_url)
+    return await new Promise(async (resolve, reject) => {
+      // Resize and compress the image
+      const imageBuffer = Buffer.from(file.data, "base64")
+      const resizedBuffer = await sharp(imageBuffer)
+        .resize({fit: "inside", width: 800}) // Adjust the width as needed
+        .jpeg({quality: 80}) // Adjust quality as needed
+        .toBuffer()
+
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "puregreen-agro",
+            invalidate: true,
+            overwrite: true,
+          },
+          function (err, result) {
+            if (result) {
+              resolve(result.secure_url)
+            }
+            if (err) {
+              reject(err)
+            }
           }
-          if (err) {
-            reject(err)
-          }
-        }
-      )
+        )
+        .end(resizedBuffer)
     })
   } catch (error) {
     return "" + error

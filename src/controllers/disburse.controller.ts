@@ -15,10 +15,12 @@ import {
   getUserRole,
 } from "../utils"
 import {getUserId} from "../utils/index"
-import {IWarehouse} from "../types/warehouse"
 import mongoose from "mongoose"
-import {IFarmer} from "../types/farmer"
 import {equityModel} from "../models/equity.model"
+import {IGrainLRP} from "../types/grainLRP"
+import {grainRepaymentModel} from "../models/grain-repayment.model"
+import {ICashLRP} from "../types/cashLRP"
+import {cashRepaymentModel} from "../models/cash-repayment.model"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -135,8 +137,6 @@ export const loanDisbursement = async (req: Request, res: Response) => {
               path: "farmer",
               populate: {path: "cooperative"},
             })
-            .populate("commodities.commodity")
-            .populate("commodities.grade")
             .populate("bundle")
             .populate("disbursedBy")
           return res.status(201).send({
@@ -159,59 +159,32 @@ export const loanDisbursement = async (req: Request, res: Response) => {
   }
 }
 
-export const repaymentDisbursement = async (req: Request, res: Response) => {
+export const cashLRP = async (req: Request, res: Response) => {
   try {
     const user = await userModel.findById(await getUserId(req, res))
     const {
       farmer,
-      commodities,
-      cash,
-      gross_weight,
-      net_weight,
-      num_bags,
-      payable_amount,
+      cash_paid,
       overage,
       outstanding_loan,
       processing_fee,
       logistics_fee,
-      repayment_type,
-    }: IDisburse = req.body
-    let farmerID
+      equity,
+    }: ICashLRP = req.body
 
-    if (repayment_type === "Cash") {
-      if (
-        !farmer ||
-        !cash ||
-        !payable_amount ||
-        !logistics_fee ||
-        !processing_fee ||
-        !overage ||
-        !outstanding_loan
-      ) {
-        return res.status(400).send({
-          error: true,
-          message:
-            "Cash Loan Repayment error (some fields are empty / invalid)",
-        })
-      }
-    } else {
-      if (
-        !farmer ||
-        !num_bags ||
-        !gross_weight ||
-        !net_weight ||
-        !commodities ||
-        !payable_amount ||
-        !overage ||
-        !logistics_fee ||
-        !processing_fee ||
-        !outstanding_loan
-      ) {
-        return res.status(400).send({
-          error: true,
-          message: "Grains repayment error (some fields are empty / invalid)",
-        })
-      }
+    if (
+      !farmer ||
+      !overage ||
+      !cash_paid ||
+      !logistics_fee ||
+      !processing_fee ||
+      !outstanding_loan ||
+      !equity
+    ) {
+      return res.status(400).send({
+        error: true,
+        message: "Cash repayment error (some fields are empty / invalid)",
+      })
     }
 
     if (
@@ -225,122 +198,363 @@ export const repaymentDisbursement = async (req: Request, res: Response) => {
         message: "Invalide Farmer (Farmer not from your Warehouse)",
       })
     }
-    const disburse = await disburseModel.findOneAndUpdate(
-      {farmer: farmer, status: "NOT PAID"},
-      {
-        ...req.body,
-        status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
-        outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
-        overage: overage > 0 ? overage : 0,
-        repayedBy: user?._id,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-    if (!disburse) {
-      return res.status(400).send({
-        error: true,
-        message: "Farmer has no pending loan",
-      })
-    }
-    const warehouse = await warehouseModel.findById(user?.warehouse)
 
-    if (!warehouse) {
-      return res.status(400).send({
-        error: true,
-        message: "Invalid user warehouse (can't access properties)",
-      })
-    }
-    if (warehouse) {
-      // if (warehouse?.commodities?.length > 0) {
-      //   warehouse?.commodities?.forEach((comm) => {
-      //     commodities?.forEach((com) => {
-      //       if (
-      //         String(comm?.commodity) === String(com.commodity) &&
-      //         String(comm?.grade) === String(com.grade)
-      //       ) {
-      //         console.log("found")
-      //         comm.quantity = comm.quantity + com.quantity
-      //         comm.weight = comm.weight + Number(com.gross_weight)
-      //         comm.net_weight = comm.net_weight + Number(com.net_weight)
-      //         return
-      //       } else {
-      //         warehouse?.commodities?.push({
-      //           quantity: com.quantity,
-      //           weight: Number(com.gross_weight),
-      //           net_weight: Number(com.net_weight),
-      //           commodity: new mongoose.Types.ObjectId(com.commodity),
-      //           grade: new mongoose.Types.ObjectId(com.grade),
-      //         })
-      //         return
-      //       }
-      //     })
-      //   })
-      //   await warehouse.save()
-      // } else {
-      //   console.log("lenght < 0")
-
-      //   commodities?.map((com) => {
-      //     warehouse?.commodities?.push({
-      //       quantity: com.quantity,
-      //       weight: Number(com.gross_weight),
-      //       net_weight: Number(com.net_weight),
-      //       commodity: new mongoose.Types.ObjectId(com.commodity),
-      //       grade: new mongoose.Types.ObjectId(com.grade),
-      //     })
-      //   })
-      //   await warehouse.save()
-      // }
-
-      for (const com of commodities!) {
-        const index = warehouse?.commodities?.findIndex(
-          (comm) =>
-            String(comm?.commodity) === String(com.commodity) &&
-            String(comm?.grade) === String(com.grade)
-        )
-
-        if (index === -1) {
-          //push here
-          warehouse?.commodities?.push({
-            quantity: Number(com.quantity),
-            weight: Number(com.gross_weight),
-            net_weight: Number(com.net_weight),
-            commodity: new mongoose.Types.ObjectId(com.commodity),
-            grade: new mongoose.Types.ObjectId(com.grade),
-          })
-          await warehouse.save()
-        } else {
-          //update here
-          warehouse.commodities[index].quantity += Number(com.quantity)
-          warehouse.commodities[index].weight += Number(com.gross_weight)
-          warehouse.commodities[index].net_weight += Number(com.net_weight)
-          await warehouse.save()
+    const disburse = await disburseModel
+      .findOneAndUpdate(
+        {farmer: farmer, status: "NOT PAID"},
+        {
+          ...req.body,
+          status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
+          outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
+          overage: overage > 0 ? overage : 0,
+        },
+        {
+          new: true,
+          runValidators: true,
         }
-      }
-    }
-    const disbursement = await disburseModel
-      .findById(disburse._id)
-      .populate("farmer")
-      .populate({
-        path: "farmer",
-        populate: {path: "cooperative"},
+      )
+      .then(async (d) => {
+        const newGrainLRP = await cashRepaymentModel.create({
+          ...req.body,
+          disbursement: d?._id,
+          ref_id: d?.ref_id,
+          status: outstanding_loan < 1 ? "PAID" : "PART PAYMENT",
+          repayedBy: user?._id,
+          repayment: "Cash",
+        })
+
+        if (!newGrainLRP) {
+          return res.status(400).send({
+            error: true,
+            message: "Unable to save Cash LRP",
+          })
+        }
+        return res.status(200).send({
+          error: false,
+          message: "Loan repayment successful",
+          data: newGrainLRP,
+        })
       })
-      .populate("commodities.commodity")
-      .populate("commodities.grade")
-      .populate("bundle")
-      .populate("disbursedBy")
-      .populate("repayedBy")
-    return res.status(200).send({
-      error: false,
-      message: "Loan repayment successful",
-      data: disbursement,
-    })
+      .catch((e) => {
+        return res.status(400).send({
+          error: true,
+          message: e.message,
+        })
+      })
   } catch (error: any) {
     return res.send({error: true, message: error?.message})
   }
 }
+export const grainLRP = async (req: Request, res: Response) => {
+  try {
+    const user = await userModel.findById(await getUserId(req, res))
+    const {
+      farmer,
+      commodities,
+      gross_weight,
+      net_weight,
+      num_bags,
+      payable_amount,
+      overage,
+      outstanding_loan,
+      processing_fee,
+      logistics_fee,
+      equity,
+    }: IGrainLRP = req.body
+
+    if (
+      !farmer ||
+      !num_bags ||
+      !gross_weight ||
+      !net_weight ||
+      !commodities ||
+      !payable_amount ||
+      !overage ||
+      !logistics_fee ||
+      !processing_fee ||
+      !outstanding_loan ||
+      !equity
+    ) {
+      return res.status(400).send({
+        error: true,
+        message: "Grains repayment error (some fields are empty / invalid)",
+      })
+    }
+
+    if (
+      farmer === undefined ||
+      farmer === "undefined" ||
+      farmer === null ||
+      farmer === "null"
+    ) {
+      return res.status(400).send({
+        error: true,
+        message: "Invalide Farmer (Farmer not from your Warehouse)",
+      })
+    }
+
+    const disburse = await disburseModel
+      .findOneAndUpdate(
+        {farmer: farmer, status: "NOT PAID"},
+        {
+          ...req.body,
+          status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
+          outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
+          overage: overage > 0 ? overage : 0,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .then(async (d) => {
+        const newGrainLRP = await grainRepaymentModel.create({
+          ...req.body,
+          disbursement: d?._id,
+          ref_id: d?.ref_id,
+          status: outstanding_loan < 1 ? "PAID" : "PART PAYMENT",
+          repayedBy: user?._id,
+          repayment: "Grains",
+        })
+        if (!newGrainLRP) {
+          return res.status(400).send({
+            error: true,
+            message: "Unable to save grain LRP",
+          })
+        }
+        const warehouse = await warehouseModel.findById(user?.warehouse)
+        if (!warehouse) {
+          return res.status(400).send({
+            error: true,
+            message: "Invalid user warehouse (can't access properties)",
+          })
+        }
+        if (warehouse) {
+          for (const com of commodities!) {
+            const index = warehouse?.commodities?.findIndex(
+              (comm) =>
+                String(comm?.commodity) === String(com.commodity) &&
+                String(comm?.grade) === String(com.grade)
+            )
+
+            if (index === -1) {
+              //push here
+              warehouse?.commodities?.push({
+                quantity: Number(com.quantity),
+                weight: Number(com.gross_weight),
+                net_weight: Number(com.net_weight),
+                commodity: new mongoose.Types.ObjectId(com.commodity),
+                grade: new mongoose.Types.ObjectId(com.grade),
+              })
+              await warehouse.save()
+            } else {
+              //update here
+              warehouse.commodities[index].quantity += Number(com.quantity)
+              warehouse.commodities[index].weight += Number(com.gross_weight)
+              warehouse.commodities[index].net_weight += Number(com.net_weight)
+              await warehouse.save()
+            }
+          }
+        }
+        return res.status(200).send({
+          error: false,
+          message: "Loan repayment successful",
+          data: newGrainLRP,
+        })
+      })
+      .catch((e) => {
+        return res.status(400).send({
+          error: true,
+          message: e.message,
+        })
+      })
+  } catch (error: any) {
+    return res.send({error: true, message: error?.message})
+  }
+}
+
+// export const repaymentDisbursement = async (req: Request, res: Response) => {
+//   try {
+//     const user = await userModel.findById(await getUserId(req, res))
+//     const {
+//       farmer,
+//       commodities,
+//       cash,
+//       gross_weight,
+//       net_weight,
+//       num_bags,
+//       payable_amount,
+//       overage,
+//       outstanding_loan,
+//       processing_fee,
+//       logistics_fee,
+//       repayment_type,
+//     }: IDisburse = req.body
+//     let farmerID
+
+//     if (repayment_type === "Cash") {
+//       if (
+//         !farmer ||
+//         !cash ||
+//         !payable_amount ||
+//         !logistics_fee ||
+//         !processing_fee ||
+//         !overage ||
+//         !outstanding_loan
+//       ) {
+//         return res.status(400).send({
+//           error: true,
+//           message:
+//             "Cash Loan Repayment error (some fields are empty / invalid)",
+//         })
+//       }
+//     } else {
+//       if (
+//         !farmer ||
+//         !num_bags ||
+//         !gross_weight ||
+//         !net_weight ||
+//         !commodities ||
+//         !payable_amount ||
+//         !overage ||
+//         !logistics_fee ||
+//         !processing_fee ||
+//         !outstanding_loan
+//       ) {
+//         return res.status(400).send({
+//           error: true,
+//           message: "Grains repayment error (some fields are empty / invalid)",
+//         })
+//       }
+//     }
+
+//     if (
+//       farmer === undefined ||
+//       farmer === "undefined" ||
+//       farmer === null ||
+//       farmer === "null"
+//     ) {
+//       return res.status(400).send({
+//         error: true,
+//         message: "Invalide Farmer (Farmer not from your Warehouse)",
+//       })
+//     }
+//     const disburse = await disburseModel.findOneAndUpdate(
+//       {farmer: farmer, status: "NOT PAID"},
+//       {
+//         ...req.body,
+//         status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
+//         outstanding_loan: outstanding_loan > 0 ? outstanding_loan : 0,
+//         overage: overage > 0 ? overage : 0,
+//         repayedBy: user?._id,
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     )
+//     if (!disburse) {
+//       return res.status(400).send({
+//         error: true,
+//         message: "Farmer has no pending loan",
+//       })
+//     }
+//     const warehouse = await warehouseModel.findById(user?.warehouse)
+
+//     if (!warehouse) {
+//       return res.status(400).send({
+//         error: true,
+//         message: "Invalid user warehouse (can't access properties)",
+//       })
+//     }
+//     if (warehouse) {
+//       // if (warehouse?.commodities?.length > 0) {
+//       //   warehouse?.commodities?.forEach((comm) => {
+//       //     commodities?.forEach((com) => {
+//       //       if (
+//       //         String(comm?.commodity) === String(com.commodity) &&
+//       //         String(comm?.grade) === String(com.grade)
+//       //       ) {
+//       //         console.log("found")
+//       //         comm.quantity = comm.quantity + com.quantity
+//       //         comm.weight = comm.weight + Number(com.gross_weight)
+//       //         comm.net_weight = comm.net_weight + Number(com.net_weight)
+//       //         return
+//       //       } else {
+//       //         warehouse?.commodities?.push({
+//       //           quantity: com.quantity,
+//       //           weight: Number(com.gross_weight),
+//       //           net_weight: Number(com.net_weight),
+//       //           commodity: new mongoose.Types.ObjectId(com.commodity),
+//       //           grade: new mongoose.Types.ObjectId(com.grade),
+//       //         })
+//       //         return
+//       //       }
+//       //     })
+//       //   })
+//       //   await warehouse.save()
+//       // } else {
+//       //   console.log("lenght < 0")
+
+//       //   commodities?.map((com) => {
+//       //     warehouse?.commodities?.push({
+//       //       quantity: com.quantity,
+//       //       weight: Number(com.gross_weight),
+//       //       net_weight: Number(com.net_weight),
+//       //       commodity: new mongoose.Types.ObjectId(com.commodity),
+//       //       grade: new mongoose.Types.ObjectId(com.grade),
+//       //     })
+//       //   })
+//       //   await warehouse.save()
+//       // }
+
+//       for (const com of commodities!) {
+//         const index = warehouse?.commodities?.findIndex(
+//           (comm) =>
+//             String(comm?.commodity) === String(com.commodity) &&
+//             String(comm?.grade) === String(com.grade)
+//         )
+
+//         if (index === -1) {
+//           //push here
+//           warehouse?.commodities?.push({
+//             quantity: Number(com.quantity),
+//             weight: Number(com.gross_weight),
+//             net_weight: Number(com.net_weight),
+//             commodity: new mongoose.Types.ObjectId(com.commodity),
+//             grade: new mongoose.Types.ObjectId(com.grade),
+//           })
+//           await warehouse.save()
+//         } else {
+//           //update here
+//           warehouse.commodities[index].quantity += Number(com.quantity)
+//           warehouse.commodities[index].weight += Number(com.gross_weight)
+//           warehouse.commodities[index].net_weight += Number(com.net_weight)
+//           await warehouse.save()
+//         }
+//       }
+//     }
+//     const disbursement = await disburseModel
+//       .findById(disburse._id)
+//       .populate("farmer")
+//       .populate({
+//         path: "farmer",
+//         populate: {path: "cooperative"},
+//       })
+//       .populate("commodities.commodity")
+//       .populate("commodities.grade")
+//       .populate("bundle")
+//       .populate("disbursedBy")
+//       .populate("repayedBy")
+//     return res.status(200).send({
+//       error: false,
+//       message: "Loan repayment successful",
+//       data: disbursement,
+//     })
+//   } catch (error: any) {
+//     return res.send({error: true, message: error?.message})
+//   }
+// }
 
 export const getDisbursement = async (req: Request, res: Response) => {
   try {
@@ -359,11 +573,11 @@ export const getDisbursement = async (req: Request, res: Response) => {
         path: "farmer",
         populate: {path: "cooperative"},
       })
-      .populate("commodities.commodity")
-      .populate("commodities.grade")
+      // .populate("commodities.commodity")
+      // .populate("commodities.grade")
       .populate("bundle")
       .populate("disbursedBy")
-      .populate("repayedBy")
+      // .populate("repayedBy")
       .populate("warehouse")
       .populate("project")
     if (!disburse) {
@@ -398,11 +612,11 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           path: "farmer",
           populate: {path: "cooperative"},
         })
-        .populate("commodities.commodity")
-        .populate("commodities.grade")
+        // .populate("commodities.commodity")
+        // .populate("commodities.grade")
         .populate("bundle")
         .populate("disbursedBy")
-        .populate("repayedBy")
+        // .populate("repayedBy")
         .populate("warehouse")
         .populate("project")
         .sort({createdAt: -1})
@@ -425,11 +639,11 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           path: "farmer",
           populate: {path: "cooperative"},
         })
-        .populate("commodities.commodity")
-        .populate("commodities.grade")
+        // .populate("commodities.commodity")
+        // .populate("commodities.grade")
         .populate("bundle")
         .populate("disbursedBy")
-        .populate("repayedBy")
+        // .populate("repayedBy")
         .populate("warehouse")
         .populate("project")
         .sort({createdAt: -1})
@@ -453,11 +667,11 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
             path: "farmer",
             populate: {path: "cooperative"},
           })
-          .populate("commodities.commodity")
-          .populate("commodities.grade")
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
           .populate("bundle")
           .populate("disbursedBy")
-          .populate("repayedBy")
+          // .populate("repayedBy")
           .populate("warehouse")
           .populate("project")
           .sort({createdAt: -1})
@@ -469,11 +683,11 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
             path: "farmer",
             populate: {path: "cooperative"},
           })
-          .populate("commodities.commodity")
-          .populate("commodities.grade")
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
           .populate("bundle")
           .populate("disbursedBy")
-          .populate("repayedBy")
+          // .populate("repayedBy")
           .populate("warehouse")
           .populate("project")
           .limit(Number(queries.limit))
@@ -512,11 +726,11 @@ export const updateDisbursement = async (req: Request, res: Response) => {
         }
       )
       .populate("farmer")
-      .populate("commodities.commodity")
-      .populate("commodities.grade")
+      // .populate("commodities.commodity")
+      // .populate("commodities.grade")
       .populate("bundle")
       .populate("disbursedBy")
-      .populate("repayedBy")
+      // .populate("repayedBy")
       .populate("warehouse")
       .populate("project")
     if (!disburse) {
@@ -570,30 +784,31 @@ export const approveDisbursement = async (req: Request, res: Response) => {
         message: "Invalid Bundle selection",
       })
     }
-    for (const input of bundleCheck.inputs) {
-      const inputs = await inputModel.findOne({
-        name: input.input?.toLowerCase(),
-        warehouse: user?.warehouse,
-      })
-      if (!inputs) {
-        return res.send({
-          error: true,
-          message: `${input.input} is not available in warehouse`,
+    if (isApproved === true) {
+      for (const input of bundleCheck.inputs) {
+        const inputs = await inputModel.findOne({
+          name: input.input?.toLowerCase(),
+          warehouse: user?.warehouse,
         })
+        if (!inputs) {
+          return res.send({
+            error: true,
+            message: `${input.input} is not available in warehouse`,
+          })
+        }
+        if (Number(inputs.quantity) < Number(input.quantity)) {
+          return res.send({
+            error: true,
+            message: `${inputs.quantity} of ${input.input} available in stock`,
+          })
+        }
+        inputs.quantity = inputs.quantity - Number(input.quantity)
+        inputs.quantity_out = inputs.quantity_out
+          ? inputs.quantity_out + Number(input.quantity)
+          : Number(input.quantity)
+        await inputs.save()
       }
-      if (Number(inputs.quantity) < Number(input.quantity)) {
-        return res.send({
-          error: true,
-          message: `${inputs.quantity} of ${input.input} available in stock`,
-        })
-      }
-      inputs.quantity = inputs.quantity - Number(input.quantity)
-      inputs.quantity_out = inputs.quantity_out
-        ? inputs.quantity_out + Number(input.quantity)
-        : Number(input.quantity)
-      await inputs.save()
     }
-
     return res
       .status(200)
       .send({error: false, message: "Disbursement updated", data: disburse})
@@ -646,6 +861,450 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
     //     : 0
     //   inputs.save()
     // }
+    return res
+      .status(200)
+      .send({error: false, message: "Disbursement Deleted", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+// cash LRP
+export const getCashLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please set a search key (ID not found)",
+      })
+    }
+
+    const disburse = await cashRepaymentModel
+      .findById(id)
+      .populate(["disbursement", "repayedBy"])
+      .populate({
+        path: "disbursement",
+        populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+      })
+      .populate({
+        path: "disbursement",
+        populate: {path: "farmer", populate: "cooperative"},
+      })
+
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const getAllCashLRP = async (req: Request, res: Response) => {
+  const {project} = req.query
+  const queries = req.query
+
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disbursement = await cashRepaymentModel
+        .find({
+          disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+        })
+        .populate(["disbursement", "repayedBy"])
+        .populate({
+          path: "disbursement",
+          populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+        })
+        .populate({
+          path: "disbursement",
+          populate: {path: "farmer", populate: "cooperative"},
+        })
+        .sort({createdAt: -1})
+        .limit(Number(queries.limit))
+      if (!disbursement) {
+        return res.status(404).send({
+          error: true,
+          message: "Disbursementment not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: disbursement})
+    }
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const disbursement = await cashRepaymentModel
+        .find({disbursedBy: user?._id})
+        .populate(["disbursement", "repayedBy"])
+        .populate({
+          path: "disbursement",
+          populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+        })
+        .populate({
+          path: "disbursement",
+          populate: {path: "farmer", populate: "cooperative"},
+        })
+        .sort({createdAt: -1})
+        .limit(Number(queries.limit))
+      if (!disbursement) {
+        return res.status(404).send({
+          error: true,
+          message: "Disbursementment not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: disbursement})
+    }
+
+    const disbursement = project
+      ? await cashRepaymentModel
+          .find({project})
+          .populate(["disbursement", "repayedBy"])
+          .populate({
+            path: "disbursement",
+            populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+          })
+          .populate({
+            path: "disbursement",
+            populate: {path: "farmer", populate: "cooperative"},
+          })
+          .sort({createdAt: -1})
+          .limit(Number(queries.limit))
+      : await cashRepaymentModel
+          .find()
+          .populate(["disbursement", "repayedBy"])
+          .populate({
+            path: "disbursement",
+            populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+          })
+          .populate({
+            path: "disbursement",
+            populate: {path: "farmer", populate: "cooperative"},
+          })
+          .limit(Number(queries.limit))
+    if (!disbursement) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursementment not found",
+      })
+    }
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: disbursement})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const updateCashLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const disburse = await cashRepaymentModel
+      .findByIdAndUpdate(
+        id,
+        {...req.body},
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .populate(["disbursement", "repayedBy"])
+      .populate({
+        path: "disbursement",
+        populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+      })
+      .populate({
+        path: "disbursement",
+        populate: {path: "farmer", populate: "cooperative"},
+      })
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Disbursement updated", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const deleteCashLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    const user_role = await getUserRole(req, res)
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const disburse = await cashRepaymentModel.findByIdAndDelete(id)
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+    return res
+      .status(200)
+      .send({error: false, message: "Disbursement Deleted", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+// cash LRP
+export const getGrainLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please set a search key (ID not found)",
+      })
+    }
+
+    const disburse = await grainRepaymentModel
+      .findById(id)
+      .populate([
+        "disbursement",
+        "repayedBy",
+        "commodities.commodity",
+        "commodities.grade",
+      ])
+      .populate({
+        path: "disbursement",
+        populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+      })
+      .populate({
+        path: "disbursement",
+        populate: {path: "farmer", populate: "cooperative"},
+      })
+
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const getAllGrainLRP = async (req: Request, res: Response) => {
+  const {project} = req.query
+  const queries = req.query
+
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disbursement = await grainRepaymentModel
+        .find({
+          disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+        })
+        .populate([
+          "disbursement",
+          "repayedBy",
+          "commodities.commodity",
+          "commodities.grade",
+        ])
+        .populate({
+          path: "disbursement",
+          populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+        })
+        .populate({
+          path: "disbursement",
+          populate: {path: "farmer", populate: "cooperative"},
+        })
+        .sort({createdAt: -1})
+        .limit(Number(queries.limit))
+      if (!disbursement) {
+        return res.status(404).send({
+          error: true,
+          message: "Disbursementment not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: disbursement})
+    }
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const disbursement = await grainRepaymentModel
+        .find({disbursedBy: user?._id})
+        .populate([
+          "disbursement",
+          "repayedBy",
+          "commodities.commodity",
+          "commodities.grade",
+        ])
+        .populate({
+          path: "disbursement",
+          populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+        })
+        .populate({
+          path: "disbursement",
+          populate: {path: "farmer", populate: "cooperative"},
+        })
+        .sort({createdAt: -1})
+        .limit(Number(queries.limit))
+      if (!disbursement) {
+        return res.status(404).send({
+          error: true,
+          message: "Disbursementment not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: disbursement})
+    }
+
+    const disbursement = project
+      ? await grainRepaymentModel
+          .find({project})
+          .populate([
+            "disbursement",
+            "repayedBy",
+            "commodities.commodity",
+            "commodities.grade",
+          ])
+          .populate({
+            path: "disbursement",
+            populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+          })
+          .populate({
+            path: "disbursement",
+            populate: {path: "farmer", populate: "cooperative"},
+          })
+          .sort({createdAt: -1})
+          .limit(Number(queries.limit))
+      : await grainRepaymentModel
+          .find()
+          .populate([
+            "disbursement",
+            "repayedBy",
+            "commodities.commodity",
+            "commodities.grade",
+          ])
+          .populate({
+            path: "disbursement",
+            populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+          })
+          .populate({
+            path: "disbursement",
+            populate: {path: "farmer", populate: "cooperative"},
+          })
+          .limit(Number(queries.limit))
+    if (!disbursement) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursementment not found",
+      })
+    }
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: disbursement})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const updateGrainLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const disburse = await grainRepaymentModel
+      .findByIdAndUpdate(
+        id,
+        {...req.body},
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .populate([
+        "disbursement",
+        "repayedBy",
+        "commodities.commodity",
+        "commodities.grade",
+      ])
+      .populate({
+        path: "disbursement",
+        populate: ["warehouse", "disbursedBy", "bundle", "farmer"],
+      })
+      .populate({
+        path: "disbursement",
+        populate: {path: "farmer", populate: "cooperative"},
+      })
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Disbursement updated", data: disburse})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const deleteGrainLRP = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    const user_role = await getUserRole(req, res)
+
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const disburse = await grainRepaymentModel.findByIdAndDelete(id)
+    if (!disburse) {
+      return res.status(404).send({
+        error: true,
+        message: "Disbursement not found",
+      })
+    }
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
@@ -814,12 +1473,12 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?._id,
-            status: "NOT PAID",
+            status: "NOT PAID" || "PART PAYMENT",
             project,
           })
         : await disburseModel.find({
             disbursedBy: user?._id,
-            status: "NOT PAID",
+            status: "NOT PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -837,12 +1496,12 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "NOT PAID",
+            status: "NOT PAID" || "PART PAYMENT",
             project,
           })
         : await disburseModel.find({
             disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "NOT PAID",
+            status: "NOT PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -943,45 +1602,23 @@ export const countRecoveredGrossWeight = async (
   const user = await userModel.findById(userID?.userId).populate("warehouse")
   const {project} = req.query
   try {
-    if (user?.role === "WAREHOUSE ADMIN") {
+    if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: user?._id,
-            status: "PAID",
+        ? await grainRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
             project,
           })
-        : await disburseModel.find({
-            disbursedBy: user?._id,
-            status: "PAID",
+        : await grainRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
       }
       const netweight = disburse.reduce(
-        (total, d) => total + Number(d.gross_weight),
-        0
-      )
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: netweight})
-    }
-    if (user?.role === "WAREHOUSE MANAGER") {
-      const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
-            project,
-          })
-        : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
-          })
-      if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
-      }
-      const netweight = disburse.reduce(
-        (total, d) => total + Number(d.gross_weight),
+        (total, d) => total + Number(d.net_weight),
         0
       )
       return res
@@ -989,8 +1626,11 @@ export const countRecoveredGrossWeight = async (
         .send({error: false, message: "Success", data: netweight})
     }
     const disburse = project
-      ? await disburseModel.find({project})
-      : await disburseModel.find()
+      ? await grainRepaymentModel.find({
+          status: "PAID" || "PART PAYMENT",
+          project,
+        })
+      : await grainRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
@@ -1012,16 +1652,16 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
   const user = await userModel.findById(userID?.userId).populate("warehouse")
   const {project} = req.query
   try {
-    if (user?.role === "WAREHOUSE ADMIN") {
+    if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: user?._id,
-            status: "PAID",
+        ? await grainRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
             project,
           })
-        : await disburseModel.find({
-            disbursedBy: user?._id,
-            status: "PAID",
+        : await grainRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -1035,31 +1675,13 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
         .status(200)
         .send({error: false, message: "Success", data: netweight})
     }
-    if (user?.role === "WAREHOUSE MANAGER") {
-      const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
-            project,
-          })
-        : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
-            status: "PAID",
-          })
-      if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
-      }
-      const netweight = disburse.reduce(
-        (total, d) => total + Number(d.net_weight),
-        0
-      )
-      return res
-        .status(200)
-        .send({error: false, message: "Success", data: netweight})
-    }
+
     const disburse = project
-      ? await disburseModel.find({project})
-      : await disburseModel.find()
+      ? await grainRepaymentModel.find({
+          status: "PAID" || "PART PAYMENT",
+          project,
+        })
+      : await grainRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
@@ -1071,6 +1693,49 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
     return res
       .status(200)
       .send({error: false, message: "Success", data: netweight})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countRecoveredCash = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId).populate("warehouse")
+  const {project} = req.query
+  try {
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disburse = project
+        ? await cashRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
+            project,
+          })
+        : await cashRepaymentModel.find({
+            repayedBy: user?._id,
+            status: "PAID" || "PART PAYMENT",
+          })
+
+      if (!disburse) {
+        return res.status(200).send({error: false, message: "not found"})
+      }
+      const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cash})
+    }
+
+    const disburse = project
+      ? await cashRepaymentModel.find({
+          status: "PAID" || "PART PAYMENT",
+          project,
+        })
+      : await cashRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
+
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
+    return res.status(200).send({error: false, message: "Success", data: cash})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
   }

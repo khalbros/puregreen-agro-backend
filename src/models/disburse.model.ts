@@ -15,26 +15,7 @@ const disburseSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Bundle",
     },
-    commodities: [
-      {
-        commodity: {
-          type: Schema.Types.ObjectId,
-          ref: "Commodity",
-        },
-        quantity: Number,
-        gross_weight: {
-          type: Number,
-        },
-        net_weight: {
-          type: Number,
-        },
-        grade: {
-          type: Schema.Types.ObjectId,
-          ref: "Grade",
-        },
-      },
-    ],
-    cash: {type: Number},
+
     repayment_type: {type: String},
     equity: {
       type: Number,
@@ -47,30 +28,14 @@ const disburseSchema = new Schema(
     repayment_amount: {
       type: Number,
     },
-    payable_amount: {
-      type: Number,
-    },
+
     outstanding_loan: {
       type: Number,
     },
     overage: {
       type: Number,
     },
-    gross_weight: {
-      type: Number,
-    },
-    net_weight: {
-      type: Number,
-    },
-    num_bags: {
-      type: Number,
-    },
-    logistics_fee: {
-      type: Number,
-    },
-    processing_fee: {
-      type: Number,
-    },
+
     status: {
       type: String,
       default: "NOT PAID",
@@ -86,10 +51,6 @@ const disburseSchema = new Schema(
       ref: "Project",
     },
     disbursedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    repayedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },

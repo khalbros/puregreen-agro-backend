@@ -28,8 +28,8 @@ export const createVisitation = async (req: Request, res: Response) => {
       havest_date,
       commodity,
       comment,
-      upload,
     }: IVisitation = req.body
+    const upload = req.files?.upload
 
     if (
       !farmer_id ||

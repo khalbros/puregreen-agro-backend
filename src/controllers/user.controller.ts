@@ -29,8 +29,8 @@ export const createUser = async (req: Request, res: Response) => {
       gender,
       warehouse,
       supervisor,
-      profile_img,
     }: IUser = req.body
+    const profile_img = req.files?.profile_img
 
     if (!name || !email || !phone || !password || !gender || !role) {
       return res.status(400).send({
@@ -163,7 +163,8 @@ export const updateUser = async (req: Request, res: Response) => {
     const {id} = req.params
     const currrentUserId = await getUserId(req, res)
     const user_role = await getUserRole(req, res)
-    const {role, warehouse, supervisor, profile_img}: IUser = req.body
+    const {role, warehouse, supervisor}: IUser = req.body
+    const profile_img = req.files?.profile_img
 
     if (!id) {
       return res.status(400).send({
