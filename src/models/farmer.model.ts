@@ -53,7 +53,6 @@ const farmerSchema = new Schema(
     },
     id_card: {
       type: String,
-      required: [true, "id card is required"],
     },
     profile_img: {
       type: String,
@@ -88,7 +87,6 @@ const farmerSchema = new Schema(
     },
     guarantor_id: {
       type: String,
-      required: [true, "guarantor id is required"],
     },
     guarantor_address: {
       type: String,
