@@ -143,6 +143,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         .populate("warehouse")
         .populate("supervisor")
         .populate("field_officers")
+        .sort({createdAt: -1})
       return res
         .status(200)
         .send({error: false, message: "Success", data: users})
@@ -152,6 +153,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       .populate("warehouse")
       .populate("supervisor")
       .populate("field_officers")
+      .sort({createdAt: -1})
     return res.status(200).send({error: false, message: "Success", data: users})
   } catch (error: any) {
     res.send({error: true, message: error?.message})

@@ -54,6 +54,10 @@ const disburseSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    repayedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {timestamps: true}
 )

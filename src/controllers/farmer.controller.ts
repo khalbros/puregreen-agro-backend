@@ -46,11 +46,6 @@ export const createFarmer = async (req: Request, res: Response) => {
     const id_card = req.files?.id_card
     const guarantor_id = req.files?.guarantor_id
 
-    console.log(req.body)
-    console.log(profile_img)
-    console.log(id_card)
-    console.log(guarantor_id)
-
     if (
       !name ||
       !gender ||

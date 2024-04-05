@@ -14,6 +14,12 @@ const cashRepaymentSchema = new Schema(
     processing_fee: {
       type: Number,
     },
+    outstanding_loan: {
+      type: Number,
+    },
+    overage: {
+      type: Number,
+    },
     status: {
       type: String,
       default: "NOT PAID",

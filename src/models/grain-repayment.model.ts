@@ -39,6 +39,12 @@ const grainRepaymentSchema = new Schema(
     num_bags: {
       type: Number,
     },
+    outstanding_loan: {
+      type: Number,
+    },
+    overage: {
+      type: Number,
+    },
     logistics_fee: {
       type: Number,
     },
