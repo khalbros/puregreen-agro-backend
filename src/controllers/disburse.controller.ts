@@ -190,6 +190,8 @@ export const approveDisbursement = async (req: Request, res: Response) => {
 
     const bundleCheck = await bundleModel.findById(disburse?.bundle)
     if (!bundleCheck) {
+      disburse.isApproved = false
+      await disburse.save()
       return res.status(400).send({
         error: true,
         message: "Invalid Bundle selection",
@@ -202,20 +204,46 @@ export const approveDisbursement = async (req: Request, res: Response) => {
           warehouse: user?.warehouse,
         })
         if (!inputs) {
+          disburse.isApproved = false
+          await disburse.save()
           return res.send({
             error: true,
-            message: `${input.input} is not available in warehouse`,
+            message: `${input.input} is not available in warehouse `,
           })
         }
         if (Number(inputs.quantity) < Number(input.quantity)) {
+          disburse.isApproved = false
+          await disburse.save()
           return res.send({
             error: true,
-            message: `${inputs.quantity} of ${input.input} available in stock`,
+            message: `${inputs.quantity} of ${input.input} available in warehouse`,
           })
         }
         inputs.quantity = inputs.quantity - Number(input.quantity)
         inputs.quantity_out = inputs.quantity_out
           ? inputs.quantity_out + Number(input.quantity)
+          : Number(input.quantity)
+        await inputs.save()
+      }
+    }
+    if (isApproved === false) {
+      for (const input of bundleCheck.inputs) {
+        const inputs = await inputModel.findOne({
+          name: input.input?.toLowerCase(),
+          warehouse: user?.warehouse,
+        })
+        if (!inputs) {
+          disburse.isApproved = false
+          await disburse.save()
+          return res.send({
+            error: true,
+            message: `${input.input} is not available in warehouse `,
+          })
+        }
+
+        inputs.quantity = inputs.quantity + Number(input.quantity)
+        inputs.quantity_out = inputs.quantity_out
+          ? inputs.quantity_out - Number(input.quantity)
           : Number(input.quantity)
         await inputs.save()
       }
@@ -344,6 +372,17 @@ export const grainLRP = async (req: Request, res: Response) => {
       return res.status(400).send({
         error: true,
         message: "Invalide Farmer (Farmer not from your Warehouse)",
+      })
+    }
+    const disburseCheck = await disburseModel.findOne(
+      {farmer: farmer},
+      {isApproved: true}
+    )
+
+    if (!disburseCheck || !disburseCheck.isApproved) {
+      return res.status(400).send({
+        error: true,
+        message: "Loan Not Approved Yet",
       })
     }
 
