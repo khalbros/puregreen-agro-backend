@@ -169,12 +169,111 @@ export const getAllInputs = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+export const getAllApprovedInputs = async (req: Request, res: Response) => {
+  const queries = req.query
+  try {
+    const userId = await getUserId(req, res)
+    const user = await userModel.findById(userId)
+    if (queries) {
+      if (queries.limit) {
+        if (user?.role === "WAREHOUSE MANAGER") {
+          const inputs = await inputModel
+            .find({warehouse: user.warehouse, isApproved: true, ...queries})
+            .populate("warehouse", {name: true})
+            .sort({createdAt: -1})
+            .limit(Number(queries.limit))
+          if (!inputs) {
+            return res.status(404).send({
+              error: true,
+              message: "Input not found",
+            })
+          }
+          return res
+            .status(200)
+            .send({error: false, message: "Success", data: inputs})
+        }
+        const inputs = await inputModel
+          .find({...queries, isApproved: true})
+          .populate("warehouse", {name: true})
+          .sort({createdAt: -1})
+          .limit(Number(queries.limit))
+        if (!inputs) {
+          return res.status(404).send({
+            error: true,
+            message: "Input not found",
+          })
+        }
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: inputs})
+      }
+      if (user?.role === "WAREHOUSE MANAGER") {
+        const inputs = await inputModel
+          .find({warehouse: user.warehouse, isApproved: true, ...queries})
+          .populate("warehouse", {name: true})
+          .sort({createdAt: -1})
+        if (!inputs) {
+          return res.status(404).send({
+            error: true,
+            message: "Input not found",
+          })
+        }
+        return res
+          .status(200)
+          .send({error: false, message: "Success", data: inputs})
+      }
+      const inputs = await inputModel
+        .find({...queries, isApproved: true})
+        .populate("warehouse", {name: true})
+        .sort({createdAt: -1})
+      if (!inputs) {
+        return res.status(404).send({
+          error: true,
+          message: "Input not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: inputs})
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const inputs = await inputModel
+        .find({warehouse: user.warehouse, isApproved: true})
+        .populate("warehouse", {name: true})
+        .sort({createdAt: -1})
+      if (!inputs) {
+        return res.status(404).send({
+          error: true,
+          message: "Input not found",
+        })
+      }
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: inputs})
+    }
+    const inputs = await inputModel
+      .find({isApproved: true})
+      .populate("warehouse", {name: true})
+      .sort({createdAt: -1})
+    if (!inputs) {
+      return res.status(404).send({
+        error: true,
+        message: "Input not found",
+      })
+    }
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: inputs})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
 
 export const getInputs = async (req: Request, res: Response) => {
   const queries = req.query
   try {
     const userId = await getUserId(req, res)
-    const inputs = await inputModel.find().distinct("name")
+    const inputs = await inputModel.find({isApproved: true}).distinct("name")
 
     if (!inputs) {
       return res.status(404).send({
@@ -190,7 +289,7 @@ export const getInputs = async (req: Request, res: Response) => {
   }
 }
 
-export const updateInput = async (req: Request, res: Response) => {
+export const ApproveInput = async (req: Request, res: Response) => {
   try {
     const {id} = req.params
     if (!id) {
@@ -204,6 +303,38 @@ export const updateInput = async (req: Request, res: Response) => {
       new: true,
       runValidators: true,
     })
+    if (!input) {
+      return res.status(404).send({
+        error: true,
+        message: "Input not found",
+      })
+    }
+
+    return res
+      .status(200)
+      .send({error: false, message: "Input updated", data: input})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+export const updateInput = async (req: Request, res: Response) => {
+  try {
+    const {id} = req.params
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please pass an ID to query",
+      })
+    }
+
+    const input = await inputModel.findByIdAndUpdate(
+      id,
+      {...req.body, isApproved: false},
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
     if (!input) {
       return res.status(404).send({
         error: true,

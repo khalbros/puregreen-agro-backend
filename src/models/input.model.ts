@@ -17,6 +17,7 @@ const inputSchema = new Schema(
     quantity_out: {
       type: Number,
     },
+    isApproved: {type: Boolean, default: false},
   },
   {timestamps: true}
 )
