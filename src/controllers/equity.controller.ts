@@ -9,9 +9,10 @@ export const equityPayment = async (req: Request, res: Response) => {
     const cuser = await getUserId(req, res)
     const user = await userModel.findById(cuser)
 
-    const {farmer, amount_paid}: IEquity = req.body
+    const {farmer, amount_paid, hectares, amount_per_hectare}: IEquity =
+      req.body
 
-    if (!farmer || !amount_paid) {
+    if (!farmer || !amount_paid || !amount_per_hectare || !hectares) {
       return res.status(400).send({
         error: true,
         message: "Error (some fields are empty / invalid)",
@@ -25,6 +26,8 @@ export const equityPayment = async (req: Request, res: Response) => {
     const newFarmer = await equityModel.create({
       farmer: farmaerCheck._id,
       amount_paid,
+      hectares,
+      amount_per_hectare,
       status: "PAID",
       paid_by: user?._id,
     })
@@ -172,6 +175,7 @@ export const updateEquityPayment = async (req: Request, res: Response) => {
         message: "Not found",
       })
     }
+
     const farmaerCheck = await farmerModel.findOne({_id: farmer.farmer})
     if (farmaerCheck) {
       farmaerCheck.equity_amount = farmer?.amount_paid

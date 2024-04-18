@@ -10,6 +10,14 @@ const equitySchema = new Schema(
       type: Number,
       required: true,
     },
+    amount_per_hectare: {
+      type: Number,
+      required: true,
+    },
+    hectares: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
       default: "NOT PAID",

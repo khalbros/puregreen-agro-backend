@@ -76,14 +76,29 @@ export const loanDisbursement = async (req: Request, res: Response) => {
       })
     }
 
-    const loanCheck = await disburseModel.findOne({
-      $and: [{farmer: farmerCheck?._id}, {status: "NOT PAID"}],
+    const loanCheck = await disburseModel.find({
+      $and: [{farmer: farmerCheck?._id, status: "NOT PAID"}],
     })
+
     if (loanCheck) {
-      return res.status(400).send({
-        error: true,
-        message: "Farmer have a pending loan",
-      })
+      const l_hectares = loanCheck.reduce(
+        (total, l) => total + Number(l.hectares),
+        0
+      )
+      const h_available = equityCheck.hectares - l_hectares
+
+      if (hectares > h_available) {
+        return res.status(400).send({
+          error: true,
+          message: `Farmer has only ${h_available} hectare remaining`,
+        })
+      }
+      if (h_available <= 0) {
+        return res.status(400).send({
+          error: true,
+          message: "Farmer have a pending loan",
+        })
+      }
     }
 
     const bundleCheck = await bundleModel.findById(bundle)
