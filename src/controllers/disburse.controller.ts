@@ -446,6 +446,18 @@ export const grainLRP = async (req: Request, res: Response) => {
             message: "Unable to save grain LRP",
           })
         }
+        if (newGrainLRP.status === "PAID") {
+          await equityModel.findOneAndUpdate(
+            {
+              $and: [{farmer: d?.farmer}, {status: "PAID"}],
+            },
+            {status: "USED"},
+            {
+              new: true,
+              runValidators: true,
+            }
+          )
+        }
         const warehouse = await warehouseModel.findById(user?.warehouse)
         if (!warehouse) {
           return res.status(400).send({
