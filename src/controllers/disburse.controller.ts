@@ -270,7 +270,7 @@ export const approveDisbursement = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
-
+// cash repayment
 export const cashLRP = async (req: Request, res: Response) => {
   try {
     const user = await userModel.findById(await getUserId(req, res))
@@ -326,6 +326,19 @@ export const cashLRP = async (req: Request, res: Response) => {
             message: "Unable to save Cash LRP",
           })
         }
+        if (newCashLRP.status === "PAID") {
+          await equityModel.findOneAndUpdate(
+            {
+              $and: [{farmer: d?.farmer}, {status: "PAID"}],
+            },
+            {status: "USED"},
+            {
+              new: true,
+              runValidators: true,
+            }
+          )
+        }
+
         return res.status(200).send({
           error: false,
           message: "Loan repayment successful",
@@ -342,6 +355,8 @@ export const cashLRP = async (req: Request, res: Response) => {
     return res.send({error: true, message: error?.message})
   }
 }
+
+// grain repayment
 export const grainLRP = async (req: Request, res: Response) => {
   try {
     const user = await userModel.findById(await getUserId(req, res))
