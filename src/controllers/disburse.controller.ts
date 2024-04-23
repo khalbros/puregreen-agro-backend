@@ -234,10 +234,13 @@ export const approveDisbursement = async (req: Request, res: Response) => {
             message: `${inputs.quantity} of ${input.input} available in warehouse`,
           })
         }
-        inputs.quantity = inputs.quantity - Number(input.quantity)
+        inputs.quantity =
+          inputs.quantity -
+          Number(Number(input.quantity) * Number(disburse?.hectares))
         inputs.quantity_out = inputs.quantity_out
-          ? inputs.quantity_out + Number(input.quantity)
-          : Number(input.quantity)
+          ? inputs.quantity_out +
+            Number(Number(input.quantity) * Number(disburse?.hectares))
+          : Number(Number(input.quantity) * Number(disburse?.hectares))
         await inputs.save()
       }
     }
@@ -256,10 +259,13 @@ export const approveDisbursement = async (req: Request, res: Response) => {
           })
         }
 
-        inputs.quantity = inputs.quantity + Number(input.quantity)
+        inputs.quantity =
+          inputs.quantity +
+          Number(Number(input.quantity) * Number(disburse?.hectares))
         inputs.quantity_out = inputs.quantity_out
-          ? inputs.quantity_out - Number(input.quantity)
-          : Number(input.quantity)
+          ? inputs.quantity_out -
+            Number(Number(input.quantity) * Number(disburse?.hectares))
+          : Number(Number(input.quantity) * Number(disburse?.hectares))
         await inputs.save()
       }
     }
