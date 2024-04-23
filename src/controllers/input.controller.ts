@@ -14,7 +14,7 @@ export const createInput = async (req: Request, res: Response) => {
       })
     }
     const nameCheck = await inputModel.findOne({
-      name: name.toLowerCase(),
+      name: {$regex: new RegExp(name, "i")},
       warehouse,
     })
     if (nameCheck)
@@ -23,7 +23,7 @@ export const createInput = async (req: Request, res: Response) => {
     const newInput = await inputModel.create({
       name: name.toLowerCase(),
       quantity,
-      warehouse: warehouse.toLowerCase(),
+      warehouse,
     })
 
     newInput
@@ -329,7 +329,7 @@ export const updateInput = async (req: Request, res: Response) => {
 
     const input = await inputModel.findByIdAndUpdate(
       id,
-      {...req.body, isApproved: false},
+      {...req.body, name: req.body.name.toLowerCase(), isApproved: false},
       {
         new: true,
         runValidators: true,

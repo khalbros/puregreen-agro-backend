@@ -110,7 +110,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
     for (const input of bundleCheck.inputs) {
       const inputs = await inputModel.findOne({
-        name: input.input?.toLowerCase(),
+        name: {$regex: new RegExp(input.input as string, "i")},
         warehouse: user?.warehouse,
       })
       if (!inputs) {
