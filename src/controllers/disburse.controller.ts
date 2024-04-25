@@ -226,7 +226,10 @@ export const approveDisbursement = async (req: Request, res: Response) => {
             message: `${input.input} is not available in warehouse `,
           })
         }
-        if (Number(inputs.quantity) < Number(input.quantity)) {
+        if (
+          Number(inputs.quantity) <
+          Number(Number(input.quantity) * Number(disburse.hectares))
+        ) {
           disburse.isApproved = false
           await disburse.save()
           return res.send({
