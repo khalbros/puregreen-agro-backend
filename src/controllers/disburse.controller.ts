@@ -77,7 +77,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
 
     const loanCheck = await disburseModel.find({
-      $and: [{farmer: farmerCheck?._id, status: "NOT PAID"}],
+      $and: [{farmer: farmerCheck?._id, status: "NOT PAID" || "PENDING"}],
     })
 
     if (loanCheck) {
