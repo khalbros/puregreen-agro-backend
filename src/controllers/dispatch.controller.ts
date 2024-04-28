@@ -21,6 +21,7 @@ import {sendEmail} from "../utils/send-mail"
 import {ICommodity} from "../types/commodity"
 import {IGrade} from "../types/grade"
 import {IUser} from "../types/user"
+import {IInput} from "../types/input"
 
 export const createDispatch = async (req: Request, res: Response) => {
   try {
@@ -680,7 +681,10 @@ export const confirmDispatch = async (req: Request, res: Response) => {
 
         if (comm) {
           receiverWarehouse?.commodities.map((commodity) => {
-            if (String(commodity.commodity) === String(dispatch.commodity)) {
+            if (
+              String(commodity.commodity) === String(dispatch.commodity) &&
+              String(commodity.grade) === String(dispatch.grade)
+            ) {
               commodity.quantity =
                 Number(commodity.quantity) + Number(Number(dispatch?.num_bags))
               commodity.weight =
@@ -702,7 +706,7 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           await receiverWarehouse?.save()
         }
       }
-      if (dispatch.input) {
+      if (dispatch.input && dispatch.input != null) {
         const w_input = await inputModel.findById(dispatch.input)
         if (!w_input) {
           await dispatchModel.findByIdAndUpdate(
@@ -737,6 +741,21 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           ? w_input.quantity_out + Number(dispatch?.num_bags)
           : Number(dispatch?.num_bags)
         await w_input.save()
+
+        const rw_input = await inputModel.findById(dispatch.input)
+        if (!rw_input) {
+          const input_n = await dispatchModel.findById(id).populate("input")
+          const input = await inputModel.create({
+            name: (input_n?.input as unknown as IInput).name,
+            quantity: dispatch?.num_bags,
+            warehouse: dispatch?.warehouse,
+          })
+          await input.save()
+        }
+        if (rw_input?.quantity) {
+          rw_input.quantity = rw_input?.quantity + Number(dispatch?.num_bags)
+          await rw_input.save()
+        }
       }
     }
     return res
