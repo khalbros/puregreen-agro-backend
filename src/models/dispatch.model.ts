@@ -22,9 +22,12 @@ const dispatchSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Input",
     },
+    grade: {
+      type: Schema.Types.ObjectId,
+      ref: "Grade",
+    },
     gross_weight: {
       type: String,
-      required: [true, "weight is missing"],
     },
     net_weight: {
       type: String,

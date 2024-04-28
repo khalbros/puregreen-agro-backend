@@ -3,7 +3,9 @@ export interface IDispatch {
   type: string
   client?: string
   warehouse?: string
-  commodity: string
+  item?: string
+  item_type?: string
+  grade?: string
   gross_weight: string
   net_weight?: string
   num_bags: string

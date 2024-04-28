@@ -8,6 +8,7 @@ import {
   deleteDispatch,
   getAllDispatches,
   getDispatch,
+  getItems,
   updateDispatch,
   veriifyDispatch,
 } from "../controllers/dispatch.controller"
@@ -21,6 +22,7 @@ const router: Router = Router()
 
 router.post("/", isWarehouseManager, createDispatch)
 router.get("/", isLoggedIn, getAllDispatches)
+router.get("/items/:id", isLoggedIn, getItems)
 router.get("/:id", isLoggedIn, getDispatch)
 router.patch("/:id", isLoggedIn, updateDispatch)
 router.patch("/approve/:id", isSuperAdmin, approveDispatch)
