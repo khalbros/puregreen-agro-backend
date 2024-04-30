@@ -119,7 +119,7 @@ export const generateRefID = async () => {
         .toString()
         .padStart(6, "0")
 
-      id = `PGC-${year}-${randomDigits}`
+      id = `TR-${project?.code}-${randomDigits}`
     }
     return id
   } catch (error) {}

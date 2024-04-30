@@ -392,13 +392,13 @@ export const approveDispatch = async (req: Request, res: Response) => {
         await sendEmail({
           to: mailTO.email as string,
           subject: "DISPATCH APPROVED",
-          message: `<p>Your Dispatch for <h4 style={display:"inline-block"}>${dispatch_for}</h4> has been Approved</p><p>please use this code: <h3 style={display:"inline-block"}>${otp}</h3> to complete your dispatch<p/>`,
+          message: `<p>Your Dispatch to <h4 style={display:"inline-block"}>${dispatch_for}</h4> has been Approved</p><p>please use this code: <h3 style={display:"inline-block"}>${otp}</h3> to complete your dispatch<p/>`,
         })
       }
 
       if (targetSocket) {
         targetSocket.emit("dispatch-treated", {
-          message: `Dispatch APPROVED for ${dispatch_for}`,
+          message: `Your Dispatch to ${dispatch_for} has been APPROVED, please use this OTP code to complete your dispatch`,
           otp,
         })
       }
