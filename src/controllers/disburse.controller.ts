@@ -913,34 +913,34 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
         message: "Disbursement not found",
       })
     }
-    // const bundleCheck = await bundleModel.findById(disburse?.bundle)
-    // if (!bundleCheck) {
-    //   return res.status(400).send({
-    //     error: true,
-    //     message: "Invalid Bundle selection",
-    //   })
-    // }
-    // for (const input of bundleCheck.inputs) {
-    //   const inputs = await inputModel.findOne({
-    //     name: input.input?.toLowerCase(),
-    //     warehouse: disburse?.warehouse,
-    //   })
-    //   if (!inputs) {
-    //     return res.send({
-    //       error: true,
-    //       message: `${input.input} is not available in warehouse`,
-    //     })
-    //   }
+    const bundleCheck = await bundleModel.findById(disburse?.bundle)
+    if (!bundleCheck) {
+      return res.status(400).send({
+        error: true,
+        message: "Invalid Bundle selection",
+      })
+    }
+    for (const input of bundleCheck.inputs) {
+      const inputs = await inputModel.findOne({
+        name: input.input?.toLowerCase(),
+        warehouse: disburse?.warehouse,
+      })
+      if (!inputs) {
+        return res.send({
+          error: true,
+          message: `${input.input} is not available in warehouse`,
+        })
+      }
 
-    //   inputs.quantity =
-    //     inputs.quantity +
-    //     Number(Number(input.quantity) * Number(disburse?.hectares))
-    //   inputs.quantity_out = inputs.quantity_out
-    //     ? inputs.quantity_out -
-    //       Number(Number(input.quantity) * Number(disburse?.hectares))
-    //     : 0
-    //   inputs.save()
-    // }
+      inputs.quantity =
+        inputs.quantity +
+        Number(Number(input.quantity) * Number(disburse?.hectares))
+      inputs.quantity_out = inputs.quantity_out
+        ? inputs.quantity_out -
+          Number(Number(input.quantity) * Number(disburse?.hectares))
+        : 0
+      inputs.save()
+    }
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
