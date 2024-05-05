@@ -1,5 +1,6 @@
 import express, {Application, Request, Response} from "express"
 import cors from "cors"
+import compression from "compression"
 import cookieParser from "cookie-parser"
 import authRouter from "./routes/auth.route"
 import userRouter from "./routes/user.route"
@@ -23,6 +24,7 @@ import stockRouter from "./routes/stock.route"
 import fileUploader from "express-fileupload"
 const app: Application = express()
 
+app.use(compression({level: 6}))
 app.use(
   cors({
     origin: [
