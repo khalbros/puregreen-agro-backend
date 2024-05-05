@@ -24,7 +24,7 @@ import stockRouter from "./routes/stock.route"
 import fileUploader from "express-fileupload"
 const app: Application = express()
 
-app.use(compression({level: 6}))
+app.use(compression())
 app.use(
   cors({
     origin: [
