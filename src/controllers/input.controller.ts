@@ -1,27 +1,27 @@
 import {Request, Response} from "express"
 import {inputModel, userModel} from "../models"
 import {IInput} from "../types/input"
-import {currentUser, getUserId, getUserRole} from "../utils"
+import {getUserId, getUserRole} from "../utils"
 
 export const createInput = async (req: Request, res: Response) => {
   try {
     const {name, quantity, warehouse}: IInput = req.body
 
-    if (!name || !quantity || !warehouse) {
+    if (!name) {
       return res.status(400).send({
         error: true,
-        message: "inputs error (some fields are empty / invalid)",
+        message: "inputs error (please enter input name)",
       })
     }
     const nameCheck = await inputModel.findOne({
-      name: {$regex: new RegExp(name, "i")},
+      name: name.toLowerCase().trim(),
       warehouse,
     })
     if (nameCheck)
       return res.status(400).send({error: true, message: "input already exist"})
 
     const newInput = await inputModel.create({
-      name: name.toLowerCase(),
+      name: name.toLowerCase().trim(),
       quantity,
       warehouse,
     })
@@ -169,6 +169,7 @@ export const getAllInputs = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
 export const getAllApprovedInputs = async (req: Request, res: Response) => {
   const queries = req.query
   try {
@@ -317,6 +318,7 @@ export const ApproveInput = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
 export const updateInput = async (req: Request, res: Response) => {
   try {
     const {id} = req.params

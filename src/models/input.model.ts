@@ -12,7 +12,6 @@ const inputSchema = new Schema(
     },
     quantity: {
       type: Number,
-      required: true,
     },
     quantity_out: {
       type: Number,
