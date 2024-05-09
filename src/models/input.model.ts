@@ -12,6 +12,7 @@ const inputSchema = new Schema(
     },
     quantity: {
       type: Number,
+      default: 0,
     },
     quantity_out: {
       type: Number,
