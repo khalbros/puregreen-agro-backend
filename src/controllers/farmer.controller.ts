@@ -35,6 +35,10 @@ export const createFarmer = async (req: Request, res: Response) => {
       id_number,
       cooperative,
       role,
+      bvn,
+      bank_name,
+      account_name,
+      account_number,
       guarantor_name,
       guarantor_number,
       guarantor_village,
@@ -93,6 +97,8 @@ export const createFarmer = async (req: Request, res: Response) => {
       id_card: id_card && (await imageUpload(id_card)),
       guarantor_id: guarantor_id && (await imageUpload(guarantor_id)),
       guarantor_name: guarantor_name.toLowerCase(),
+      account_name: account_name && account_name.toLowerCase(),
+      bank_name: bank_name && bank_name.toLowerCase(),
       field_officer: user?._id,
       supervisor:
         user?.role === "WAREHOUSE ADMIN" ? user?._id : user?.supervisor,
@@ -694,6 +700,7 @@ export const verifiedFarmers = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
 export const unVerifiedFarmers = async (req: Request, res: Response) => {
   const user = await currentUser(req, res)
   try {

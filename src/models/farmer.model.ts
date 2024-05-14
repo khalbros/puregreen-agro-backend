@@ -54,6 +54,23 @@ const farmerSchema = new Schema(
     id_card: {
       type: String,
     },
+    account_number: {
+      type: String,
+      unique: [
+        true,
+        "account number already exist please choose a new account number",
+      ],
+    },
+    account_name: {
+      type: String,
+    },
+    bvn: {
+      type: String,
+      unique: [true, "bvn already registered with another farmer"],
+    },
+    bank_name: {
+      type: String,
+    },
     profile_img: {
       type: String,
     },

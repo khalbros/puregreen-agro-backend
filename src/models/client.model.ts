@@ -13,17 +13,14 @@ const clientSchema = new Schema(
     email: {
       type: String,
       required: [true, "email is required"],
-      unique: [
-        true,
-        "email already exist please choose a new email or login instead",
-      ],
+      unique: [true, "email already exist please choose a new email"],
     },
     phone: {
       type: String,
       required: [true, "phone number is required"],
       unique: [
         true,
-        "phone number already exist please choose a new phone number or login instead",
+        "phone number already exist please choose a new phone number",
       ],
     },
     address: {
@@ -35,7 +32,7 @@ const clientSchema = new Schema(
       required: [true, "acount number is required"],
       unique: [
         true,
-        "phone number already exist please choose a new phone number or login instead",
+        "account number already exist please choose a new account number",
       ],
     },
     bank_name: {

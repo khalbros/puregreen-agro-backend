@@ -15,6 +15,10 @@ export interface IFarmer {
   id_type: string
   id_number: string
   id_card: string
+  account_name?: string
+  account_number?: string
+  bvn?: string
+  bank_name?: string
   cooperative: string
   role: string
   guarantor_name: string
