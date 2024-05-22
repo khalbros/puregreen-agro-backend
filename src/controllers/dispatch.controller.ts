@@ -342,14 +342,17 @@ export const approveDispatch = async (req: Request, res: Response) => {
       })
     }
 
-    const dispatch = await dispatchModel.findByIdAndUpdate(
-      id,
-      {isApproved, status: isApproved ? "APPROVED" : "REJECTED"},
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
+    const dispatch = await dispatchModel
+      .findByIdAndUpdate(
+        id,
+        {isApproved, status: isApproved ? "APPROVED" : "REJECTED"},
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+      .populate("input")
+      .populate("commodity")
 
     if (!dispatch) {
       return res.status(400).send({
@@ -392,7 +395,13 @@ export const approveDispatch = async (req: Request, res: Response) => {
         await sendEmail({
           to: mailTO.email as string,
           subject: "DISPATCH APPROVED",
-          message: `<p>Your Dispatch to <h4 style={display:"inline-block"}>${dispatch_for}</h4> has been Approved</p><p>please use this code: <h3 style={display:"inline-block"}>${otp}</h3> to complete your dispatch<p/>`,
+          message: `<p>Your Dispatch for <h4 style={display:"inline-block"}>${
+            dispatch.num_bags
+          }</h4> bags/lts of <h4 style={display:"inline-block"}>${
+            dispatch.input
+              ? (dispatch.input as any).name
+              : (dispatch.commodity as any).name
+          }</h4> to <h4 style={display:"inline-block"}>${dispatch_for}</h4> has been Approved</p><p>please use this code: <h3 style={display:"inline-block"}>${otp}</h3> to complete your dispatch<p/>`,
         })
       }
 
@@ -653,7 +662,14 @@ export const confirmDispatch = async (req: Request, res: Response) => {
       const senderWarehouse = await warehouseModel.findOne({
         warehouse_manager: dispatch.createdBy,
       })
-      if (dispatch.commodity) {
+      // if (!senderWarehouse) {
+      //   return res.status(400).send({
+      //     error: true,
+      //     message: "Error Sender Warehouse not found",
+      //   })
+      // }
+
+      if (dispatch.commodity && dispatch.commodity != null) {
         senderWarehouse?.commodities ===
           senderWarehouse?.commodities.map((commodity) => {
             if (
@@ -705,10 +721,14 @@ export const confirmDispatch = async (req: Request, res: Response) => {
           })
           await receiverWarehouse?.save()
         }
+        return res
+          .status(200)
+          .send({error: false, message: "Dispatch updated", data: dispatch})
       }
+
       if (dispatch.input && dispatch.input != null) {
-        const w_input = await inputModel.findById(dispatch.input)
-        if (!w_input) {
+        const sender_input = await inputModel.findById(dispatch.input)
+        if (!sender_input) {
           await dispatchModel.findByIdAndUpdate(
             id,
             {status: "FAILED", isReceived: false},
@@ -722,7 +742,7 @@ export const confirmDispatch = async (req: Request, res: Response) => {
             message: "Input not found",
           })
         }
-        if (Number(w_input.quantity - Number(dispatch?.num_bags)) < 0) {
+        if (Number(sender_input.quantity - Number(dispatch?.num_bags)) < 0) {
           await dispatchModel.findByIdAndUpdate(
             id,
             {status: "FAILED", isReceived: false},
@@ -736,31 +756,60 @@ export const confirmDispatch = async (req: Request, res: Response) => {
             message: "NO ENOUGH INPUTS IN WAREHOUSE",
           })
         }
-        w_input.quantity = w_input.quantity - Number(dispatch?.num_bags)
-        w_input.quantity_out = w_input.quantity_out
-          ? w_input.quantity_out + Number(dispatch?.num_bags)
-          : Number(dispatch?.num_bags)
-        await w_input.save()
 
-        const rw_input = await inputModel.findById(dispatch.input)
-        if (!rw_input) {
-          const input_n = await dispatchModel.findById(id).populate("input")
+        const receiver_input = await inputModel.findOne({
+          name: sender_input.name,
+          warehouse: dispatch.warehouse,
+        })
+
+        if (!receiver_input) {
           const input = await inputModel.create({
-            name: (input_n?.input as unknown as IInput).name,
+            name: sender_input.name,
             quantity: dispatch?.num_bags,
             warehouse: dispatch?.warehouse,
+            isApproved: true,
           })
+          if (!input) {
+            await dispatchModel.findByIdAndUpdate(
+              id,
+              {status: "FAILED", isReceived: false},
+              {
+                new: true,
+                runValidators: true,
+              }
+            )
+            return res.status(400).send({
+              error: true,
+              message: "Fail to create input",
+            })
+          }
           await input.save()
+          sender_input.quantity =
+            sender_input.quantity - Number(dispatch?.num_bags)
+          sender_input.quantity_out = sender_input.quantity_out
+            ? sender_input.quantity_out + Number(dispatch?.num_bags)
+            : Number(dispatch?.num_bags)
+          await sender_input.save()
+          return res
+            .status(200)
+            .send({error: false, message: "Dispatch completed", data: dispatch})
         }
-        if (rw_input?.quantity) {
-          rw_input.quantity = rw_input?.quantity + Number(dispatch?.num_bags)
-          await rw_input.save()
+        if (receiver_input) {
+          receiver_input.quantity =
+            receiver_input?.quantity + Number(dispatch?.num_bags)
+          sender_input.quantity =
+            sender_input.quantity - Number(dispatch?.num_bags)
+          sender_input.quantity_out = sender_input.quantity_out
+            ? sender_input.quantity_out + Number(dispatch?.num_bags)
+            : Number(dispatch?.num_bags)
+          await receiver_input.save()
+          await sender_input.save()
+          return res
+            .status(200)
+            .send({error: false, message: "Dispatch completed", data: dispatch})
         }
       }
     }
-    return res
-      .status(200)
-      .send({error: false, message: "Dispatch updated", data: dispatch})
   } catch (error: any) {
     res.status(400).send({error: true, message: error?.message})
   }

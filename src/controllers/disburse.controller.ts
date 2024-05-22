@@ -279,6 +279,7 @@ export const approveDisbursement = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
 // cash repayment
 export const cashLRP = async (req: Request, res: Response) => {
   try {
@@ -1804,38 +1805,87 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
   }
 }
 
-export const countRecoveredCash = async (req: Request, res: Response) => {
+export const countRecoveredGrains = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
   const {project} = req.query
   try {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await cashRepaymentModel.find({
+        ? await grainRepaymentModel.find({
             repayedBy: user?._id,
-            status: "PAID" || "PART PAYMENT",
             project,
           })
-        : await cashRepaymentModel.find({
+        : await grainRepaymentModel.find({
             repayedBy: user?._id,
-            status: "PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
         return res.status(200).send({error: false, message: "not found"})
       }
-      const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
+      const grain = disburse.reduce(
+        (total, d) => total + Number(d.payable_amount),
+        0
+      )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: cash})
+        .send({error: false, message: "Success", data: grain})
     }
 
     const disburse = project
       ? await cashRepaymentModel.find({
-          status: "PAID" || "PART PAYMENT",
           project,
         })
-      : await cashRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
+      : await cashRepaymentModel.find()
+
+    if (!disburse) {
+      return res.status(200).send({error: false, message: "not found"})
+    }
+    const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
+    return res.status(200).send({error: false, message: "Success", data: cash})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
+
+export const countRecoveredCash = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId).populate("warehouse")
+  const {project} = req.query
+  try {
+    if (
+      user?.role === "WAREHOUSE MANAGER" ||
+      user?.role === "WAREHOUSE ADMIN"
+    ) {
+      const disburse = project
+        ? await cashRepaymentModel
+            .find({
+              project,
+            })
+            .populate("disbursement")
+        : await cashRepaymentModel.find().populate("disbursement")
+
+      const filterDisburse = disburse?.filter(
+        (disburse) =>
+          String((disburse as any)?.disbursement.warehouse) ===
+          String(user.warehouse?._id)
+      )
+
+      const cash = filterDisburse.reduce(
+        (total, d) => total + Number(d.cash_paid),
+        0
+      )
+      return res
+        .status(200)
+        .send({error: false, message: "Success", data: cash})
+    }
+    // ///////////////////////////////////////$
+
+    const disburse = project
+      ? await cashRepaymentModel.find({
+          project,
+        })
+      : await cashRepaymentModel.find()
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})

@@ -24,6 +24,7 @@ import {
   getGrainLRP,
   updateCashLRP,
   updateGrainLRP,
+  countRecoveredGrains,
 } from "../controllers/disburse.controller"
 import {isLoggedIn} from "../middlewares/auth.middleware"
 
@@ -50,6 +51,7 @@ router.get("/count/hectares-disburse", isLoggedIn, countDisburseHectares)
 router.get("/count/equity-disburse", isLoggedIn, countEquity)
 router.get("/count/outstanding-loan", isLoggedIn, countOutstandinLoan)
 router.get("/count/recovered-loan", isLoggedIn, countRecoveredLoan)
+router.get("/count/recovered-grain", isLoggedIn, countRecoveredGrains)
 router.get("/count/recovered-cash", isLoggedIn, countRecoveredCash)
 router.get("/count/recovered-netweight", isLoggedIn, countRecoveredNetWeight)
 router.get(
