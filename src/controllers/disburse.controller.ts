@@ -1162,6 +1162,21 @@ export const deleteCashLRP = async (req: Request, res: Response) => {
         message: "Disbursement not found",
       })
     }
+    const loan = await disburseModel.findById(disburse.disbursement)
+    if (loan) {
+      loan.outstanding_loan = loan.outstanding_loan
+        ? loan.outstanding_loan + disburse.outstanding_loan!
+        : disburse.outstanding_loan
+      loan.overage = loan.overage
+        ? loan.overage + disburse.overage!
+        : disburse.overage
+      loan.status =
+        loan.repayment_amount === loan.outstanding_loan
+          ? "NOT PAID"
+          : "PART PAYMENT"
+      await loan.save()
+    }
+
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
@@ -1412,6 +1427,41 @@ export const deleteGrainLRP = async (req: Request, res: Response) => {
         message: "Disbursement not found",
       })
     }
+    const loan = await disburseModel.findById(disburse.disbursement)
+    if (loan) {
+      loan.outstanding_loan = loan.outstanding_loan
+        ? loan.outstanding_loan + disburse.outstanding_loan!
+        : disburse.outstanding_loan
+      loan.overage = loan.overage
+        ? loan.overage + disburse.overage!
+        : disburse.overage
+      loan.status =
+        loan.repayment_amount === loan.outstanding_loan
+          ? "NOT PAID"
+          : "PART PAYMENT"
+      await loan.save()
+    }
+    const warehouse = await warehouseModel.findById(loan?.warehouse)
+    if (warehouse) {
+      for (const com of disburse.commodities!) {
+        const index = warehouse?.commodities?.findIndex(
+          (comm) =>
+            String(comm?.commodity) === String(com.commodity) &&
+            String(comm?.grade) === String(com.grade)
+        )
+
+        if (index === -1) {
+          await warehouse?.save()
+        } else {
+          //update here
+          warehouse.commodities[index].quantity -= Number(com.quantity)
+          warehouse.commodities[index].weight -= Number(com.gross_weight)
+          warehouse.commodities[index].net_weight -= Number(com.net_weight)
+          await warehouse.save()
+        }
+      }
+    }
+
     return res
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
