@@ -6,6 +6,7 @@ import {
   countNWByWarehouse,
   createCommodity,
   deleteCommodity,
+  deleteCommodityByWarehouse,
   getAllApprovedCommodities,
   getAllCommodities,
   getCommodity,
@@ -27,6 +28,7 @@ router.get("/", isLoggedIn, getAllApprovedCommodities)
 router.get("/all", isSuperAdminOrAdmin, getAllCommodities)
 router.get("/:id", isLoggedIn, getCommodity)
 router.get("/warehouse/:id", isLoggedIn, getCommodityByWarehouse)
+router.delete("/warehouse/:id", isLoggedIn, deleteCommodityByWarehouse)
 router.patch("/:id", isSuperAdminOrAdmin, updateCommodity)
 router.delete("/:id", isSuperAdmin, deleteCommodity)
 router.get("/count/received", isWarehouseManager, countCommoditiesReceived)

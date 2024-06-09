@@ -215,6 +215,45 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+export const deleteCommodityByWarehouse = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const {id} = req.params
+    const {commodity_id} = req.query
+    if (!id) {
+      return res.status(400).send({
+        error: true,
+        message: "Error Please set a search key (ID not found)",
+      })
+    }
+
+    const warehouse = await warehouseModel
+      .findById(id)
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({createAt: -1})
+
+    if (!warehouse) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+
+    const commodities = warehouse.commodities.filter(
+      (com: any) => String(com._id) !== commodity_id
+    )
+    warehouse.commodities = commodities
+    await warehouse.save()
+    return res
+      .status(200)
+      .send({error: false, message: "Success", data: commodities})
+  } catch (error: any) {
+    res.send({error: true, message: error?.message})
+  }
+}
 
 // action
 

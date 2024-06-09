@@ -206,7 +206,7 @@ export const isSuperAdminOrAdmin = async (
     ) {
       return res.status(403).send({
         error: true,
-        message: "Access Denied! (you are not a field officer)",
+        message: "Access Denied! (you are not an ADMIN)",
       })
     }
     next()
