@@ -1883,15 +1883,15 @@ export const countRecoveredGrains = async (req: Request, res: Response) => {
     }
 
     const disburse = project
-      ? await cashRepaymentModel.find({
+      ? await grainRepaymentModel.find({
           project,
         })
-      : await cashRepaymentModel.find()
+      : await grainRepaymentModel.find()
 
     if (!disburse) {
       return res.status(200).send({error: false, message: "not found"})
     }
-    const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
+    const cash = disburse.reduce((total, d) => total + Number(d.payable_amount), 0)
     return res.status(200).send({error: false, message: "Success", data: cash})
   } catch (error: any) {
     res.send({error: true, message: error?.message})
