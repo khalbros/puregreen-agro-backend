@@ -170,7 +170,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
         return res.send({error: true, message: err?.message})
       })
   } catch (error: any) {
-    return res.send({error: true, message: error?.message})
+    return res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -276,7 +276,7 @@ export const approveDisbursement = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement updated", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -362,7 +362,7 @@ export const cashLRP = async (req: Request, res: Response) => {
         })
       })
   } catch (error: any) {
-    return res.send({error: true, message: error?.message})
+    return res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -515,7 +515,7 @@ export const grainLRP = async (req: Request, res: Response) => {
         })
       })
   } catch (error: any) {
-    return res.send({error: true, message: error?.message})
+    return res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -698,7 +698,7 @@ export const grainLRP = async (req: Request, res: Response) => {
 //       data: disbursement,
 //     })
 //   } catch (error: any) {
-//     return res.send({error: true, message: error?.message})
+//     return res.send({error: true, message: (error as any)?.message})
 //   }
 // }
 
@@ -737,7 +737,7 @@ export const getDisbursement = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -848,7 +848,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disbursement})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -891,7 +891,7 @@ export const updateDisbursement = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement updated", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -946,7 +946,7 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -984,7 +984,7 @@ export const getCashLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1095,7 +1095,7 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disbursement})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1139,7 +1139,7 @@ export const updateCashLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement updated", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1181,7 +1181,7 @@ export const deleteCashLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1224,7 +1224,7 @@ export const getGrainLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1355,7 +1355,7 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: disbursement})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1404,7 +1404,7 @@ export const updateGrainLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement updated", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1466,7 +1466,7 @@ export const deleteGrainLRP = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Disbursement Deleted", data: disburse})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1534,7 +1534,7 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: amount})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1617,7 +1617,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: amount})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1687,7 +1687,7 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: outstanding})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1747,7 +1747,7 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: hectares})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1800,7 +1800,7 @@ export const countRecoveredGrossWeight = async (
       .status(200)
       .send({error: false, message: "Success", data: netweight})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1851,7 +1851,7 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: netweight})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1894,7 +1894,7 @@ export const countRecoveredGrains = async (req: Request, res: Response) => {
     const cash = disburse.reduce((total, d) => total + Number(d.payable_amount), 0)
     return res.status(200).send({error: false, message: "Success", data: cash})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -1943,7 +1943,7 @@ export const countRecoveredCash = async (req: Request, res: Response) => {
     const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
     return res.status(200).send({error: false, message: "Success", data: cash})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -2006,7 +2006,7 @@ export const countEquity = async (req: Request, res: Response) => {
       .status(200)
       .send({error: false, message: "Success", data: netweight})
   } catch (error: any) {
-    res.send({error: true, message: error?.message})
+    res.send({error: true, message: (error as any)?.message})
   }
 }
 
@@ -2067,7 +2067,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
       .status(200)
       .send({ error: false, message: "Success", data: disburse })
   } catch (error) {
-    res.send({ error: true, message: error?.message })
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -2127,6 +2127,6 @@ export const getOutstandingLoan = async (req: Request, res: Response) => {
       .status(200)
       .send({ error: false, message: "Success", data: disburse })
   } catch (error) {
-    res.send({ error: true, message: error?.message })
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
