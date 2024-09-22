@@ -25,6 +25,8 @@ import {
   updateCashLRP,
   updateGrainLRP,
   countRecoveredGrains,
+  getRecoveredLoan,
+  getOutstandingLoan
 } from "../controllers/disburse.controller"
 import {isLoggedIn} from "../middlewares/auth.middleware"
 
@@ -34,6 +36,8 @@ router.post("/loan", isLoggedIn, loanDisbursement)
 router.post("/repayment/grain", isLoggedIn, grainLRP)
 router.post("/repayment/cash", isLoggedIn, cashLRP)
 router.get("/", isLoggedIn, getAllDisbursements)
+router.get("/outstanding-loan", isLoggedIn, getOutstandinLoan)
+router.get("/recovered-loan", isLoggedIn, getRecoveredLoan)
 router.get("/grain", isLoggedIn, getAllGrainLRP)
 router.get("/cash", isLoggedIn, getAllCashLRP)
 router.get("/grain/:id", isLoggedIn, getGrainLRP)
