@@ -2009,3 +2009,124 @@ export const countEquity = async (req: Request, res: Response) => {
     res.send({error: true, message: error?.message})
   }
 }
+
+// ////////////////////Query
+export const getRecoveredLoan = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId).populate("warehouse")
+  const { project } = req.query
+  try {
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const disburse = project
+        ? await disburseModel.find({
+            disbursedBy: user?._id,
+            project,
+            status: "PAID" || "PART PAYMENT"
+          })
+        : await disburseModel.find({
+            disbursedBy: user?._id,
+             status: "PAID" || "PART PAYMENT"
+          })
+
+      if (!disburse) {
+        return res.status(200).send({ error: false, message: "not found" })
+      }
+    
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: disburse })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disburse = project
+        ? await disburseModel.find({
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+            project,
+            status: "PAID" || "PART PAYMENT"
+          })
+        : await disburseModel.find({
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+            status: "PAID" || "PART PAYMENT"
+          })
+      if (!disburse) {
+        return res.status(200).send({ error: false, message: "not found" })
+      }
+    
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: disburse })
+    }
+    const disburse = project
+      ? await disburseModel.find({ project,status: "PAID" || "PART PAYMENT" })
+      : await disburseModel.find({status: "PAID" || "PART PAYMENT"})
+
+    if (!disburse) {
+      return res.status(200).send({ error: false, message: "not found" })
+    }
+ 
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: error?.message })
+  }
+}
+
+export const getOutstandingLoan = async (req: Request, res: Response) => {
+  const userID = await currentUser(req, res)
+  const user = await userModel.findById(userID?.userId).populate("warehouse")
+  const { project } = req.query
+  try {
+    if (user?.role === "WAREHOUSE ADMIN") {
+      const disburse = project
+        ? await disburseModel.find({
+            disbursedBy: user?._id,
+            project,
+            status: "NOT PAID"
+          })
+        : await disburseModel.find({
+            disbursedBy: user?._id,
+             status: "NOT PAID"
+          })
+
+      if (!disburse) {
+        return res.status(200).send({ error: false, message: "not found" })
+      }
+    
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: disburse })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const disburse = project
+        ? await disburseModel.find({
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+            project,
+            status: "NOT PAID"
+          })
+        : await disburseModel.find({
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+            status: "NOT PAID"
+          })
+      if (!disburse) {
+        return res.status(200).send({ error: false, message: "not found" })
+      }
+    
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: disburse })
+    }
+    const disburse = project
+      ? await disburseModel.find({ project,status: "NOT PAID"})
+      : await disburseModel.find({status: "NOT PAID"})
+
+    if (!disburse) {
+      return res.status(200).send({ error: false, message: "not found" })
+    }
+ 
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: error?.message })
+  }
+}
