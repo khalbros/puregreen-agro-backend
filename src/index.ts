@@ -5,7 +5,7 @@ import app from "./app"
 import { Server, Socket } from "socket.io"
 
 const PORT = process.env.PORT!
-const DB_URL = process.env.DEV ? process.env.DB_URL! : process.env.PROD_DB_URL!
+const DB_URL = process.env.DB_URL!
 
 const server = http.createServer(app)
 export const io = new Server(server, {
