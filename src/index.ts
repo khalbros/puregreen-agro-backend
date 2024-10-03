@@ -2,10 +2,11 @@ import "dotenv/config"
 import http from "http"
 import mongoose from "mongoose"
 import app from "./app"
-import {Server, Socket} from "socket.io"
+import { Server, Socket } from "socket.io"
 
 const PORT = process.env.PORT!
-const DB_URL = process.env.DB_URL!
+const DB_URL =
+  "mongodb+srv://puregreenagrochemicals:Pure3434@workbenchdb.cs4fb10.mongodb.net/?retryWrites=true&w=majority&appName=WorkBench"
 
 const server = http.createServer(app)
 export const io = new Server(server, {
@@ -19,7 +20,7 @@ export const activeSockets: Record<string, Socket> = {}
 
 mongoose.set("strictQuery", true)
 mongoose
-  .connect(DB_URL, {autoIndex: false})
+  .connect(DB_URL, { autoIndex: false })
   .then(
     () => {
       console.log("DataBase Connected")

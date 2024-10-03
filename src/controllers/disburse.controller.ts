@@ -1,4 +1,4 @@
-import {Request, Response} from "express"
+import { Request, Response } from "express"
 import {
   farmerModel,
   disburseModel,
@@ -7,20 +7,20 @@ import {
   userModel,
   warehouseModel,
 } from "../models"
-import {IDisburse} from "../types/disburse"
+import { IDisburse } from "../types/disburse"
 import {
   currentUser,
   generateRefID,
   getCurrentProject,
   getUserRole,
 } from "../utils"
-import {getUserId} from "../utils/index"
-import mongoose, {Types} from "mongoose"
-import {equityModel} from "../models/equity.model"
-import {IGrainLRP} from "../types/grainLRP"
-import {grainRepaymentModel} from "../models/grain-repayment.model"
-import {ICashLRP} from "../types/cashLRP"
-import {cashRepaymentModel} from "../models/cash-repayment.model"
+import { getUserId } from "../utils/index"
+import mongoose, { Types } from "mongoose"
+import { equityModel } from "../models/equity.model"
+import { IGrainLRP } from "../types/grainLRP"
+import { grainRepaymentModel } from "../models/grain-repayment.model"
+import { ICashLRP } from "../types/cashLRP"
+import { cashRepaymentModel } from "../models/cash-repayment.model"
 
 export const loanDisbursement = async (req: Request, res: Response) => {
   try {
@@ -67,7 +67,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
 
     const equityCheck = await equityModel.findOne({
-      $and: [{farmer: farmerCheck?._id}, {status: "PAID"}],
+      $and: [{ farmer: farmerCheck?._id }, { status: "PAID" }],
     })
     if (!equityCheck) {
       return res.status(400).send({
@@ -77,7 +77,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
 
     const loanCheck = await disburseModel.find({
-      $and: [{farmer: farmerCheck?._id, status: "NOT PAID" || "PENDING"}],
+      $and: [{ farmer: farmerCheck?._id, status: "NOT PAID" || "PENDING" }],
     })
 
     if (loanCheck) {
@@ -110,7 +110,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
     }
     for (const input of bundleCheck.inputs) {
       const inputs = await inputModel.findOne({
-        name: {$regex: new RegExp(input.input as string, "i")},
+        name: { $regex: new RegExp(input.input as string, "i") },
         warehouse: user?.warehouse,
       })
       if (!inputs) {
@@ -150,7 +150,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
             .populate("farmer")
             .populate({
               path: "farmer",
-              populate: {path: "cooperative"},
+              populate: { path: "cooperative" },
             })
             .populate("bundle")
             .populate("disbursedBy")
@@ -161,16 +161,16 @@ export const loanDisbursement = async (req: Request, res: Response) => {
           })
         },
         (err) => {
-          return res.send({error: true, message: err?.message})
+          return res.send({ error: true, message: err?.message })
         }
       )
       .catch((err) => {
         console.log(err)
 
-        return res.send({error: true, message: err?.message})
+        return res.send({ error: true, message: err?.message })
       })
-  } catch (error: any) {
-    return res.send({error: true, message: (error as any)?.message})
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -178,8 +178,8 @@ export const approveDisbursement = async (req: Request, res: Response) => {
   try {
     const userID = await getUserId(req, res)
     const user = await userModel.findById(userID)
-    const {id} = req.params
-    const {isApproved} = req.body
+    const { id } = req.params
+    const { isApproved } = req.body
 
     if (!id) {
       return res.status(400).send({
@@ -190,7 +190,7 @@ export const approveDisbursement = async (req: Request, res: Response) => {
 
     const disburse = await disburseModel.findByIdAndUpdate(
       id,
-      {isApproved},
+      { isApproved },
       {
         new: true,
         runValidators: true,
@@ -274,9 +274,9 @@ export const approveDisbursement = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Disbursement updated", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement updated", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -284,8 +284,12 @@ export const approveDisbursement = async (req: Request, res: Response) => {
 export const cashLRP = async (req: Request, res: Response) => {
   try {
     const user = await userModel.findById(await getUserId(req, res))
-    const {disbursement, cash_paid, overage, outstanding_loan}: ICashLRP =
-      req.body
+    const {
+      disbursement,
+      cash_paid,
+      overage,
+      outstanding_loan,
+    }: ICashLRP = req.body
 
     if (!disbursement || !overage || !cash_paid || !outstanding_loan) {
       return res.status(400).send({
@@ -295,8 +299,8 @@ export const cashLRP = async (req: Request, res: Response) => {
     }
 
     const disburse = await disburseModel.findOne(
-      {_id: new Types.ObjectId(disbursement)},
-      {isApproved: true}
+      { _id: new Types.ObjectId(disbursement) },
+      { isApproved: true }
     )
 
     if (!disburse || !disburse.isApproved) {
@@ -308,7 +312,7 @@ export const cashLRP = async (req: Request, res: Response) => {
 
     await disburseModel
       .findOneAndUpdate(
-        {_id: new Types.ObjectId(disbursement)},
+        { _id: new Types.ObjectId(disbursement) },
         {
           ...req.body,
           status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
@@ -339,9 +343,9 @@ export const cashLRP = async (req: Request, res: Response) => {
         if (newCashLRP.status === "PAID") {
           await equityModel.findOneAndUpdate(
             {
-              $and: [{farmer: d?.farmer}, {status: "PAID"}],
+              $and: [{ farmer: d?.farmer }, { status: "PAID" }],
             },
-            {status: "USED"},
+            { status: "USED" },
             {
               new: true,
               runValidators: true,
@@ -361,8 +365,8 @@ export const cashLRP = async (req: Request, res: Response) => {
           message: e.message,
         })
       })
-  } catch (error: any) {
-    return res.send({error: true, message: (error as any)?.message})
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -415,8 +419,8 @@ export const grainLRP = async (req: Request, res: Response) => {
       })
     }
     const disburseCheck = await disburseModel.findOne(
-      {farmer: farmer},
-      {isApproved: true}
+      { farmer: farmer },
+      { isApproved: true }
     )
 
     if (!disburseCheck || !disburseCheck.isApproved) {
@@ -428,7 +432,7 @@ export const grainLRP = async (req: Request, res: Response) => {
 
     const disburse = await disburseModel
       .findOneAndUpdate(
-        {farmer: farmer, status: "NOT PAID"},
+        { farmer: farmer, status: "NOT PAID" },
         {
           ...req.body,
           status: outstanding_loan < 1 ? "PAID" : "NOT PAID",
@@ -459,9 +463,9 @@ export const grainLRP = async (req: Request, res: Response) => {
         if (newGrainLRP.status === "PAID") {
           await equityModel.findOneAndUpdate(
             {
-              $and: [{farmer: d?.farmer}, {status: "PAID"}],
+              $and: [{ farmer: d?.farmer }, { status: "PAID" }],
             },
-            {status: "USED"},
+            { status: "USED" },
             {
               new: true,
               runValidators: true,
@@ -514,8 +518,8 @@ export const grainLRP = async (req: Request, res: Response) => {
           message: e.message,
         })
       })
-  } catch (error: any) {
-    return res.send({error: true, message: (error as any)?.message})
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -704,7 +708,7 @@ export const grainLRP = async (req: Request, res: Response) => {
 
 export const getDisbursement = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -717,7 +721,7 @@ export const getDisbursement = async (req: Request, res: Response) => {
       .populate("farmer")
       .populate({
         path: "farmer",
-        populate: {path: "cooperative"},
+        populate: { path: "cooperative" },
       })
       // .populate("commodities.commodity")
       // .populate("commodities.grade")
@@ -735,14 +739,14 @@ export const getDisbursement = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const getAllDisbursements = async (req: Request, res: Response) => {
-  const {project} = req.query
+  const { project } = req.query
   const queries = req.query
 
   try {
@@ -751,12 +755,12 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disbursement = await disburseModel
         .find({
-          disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+          disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
         })
         .populate("farmer")
         .populate({
           path: "farmer",
-          populate: {path: "cooperative"},
+          populate: { path: "cooperative" },
         })
         // .populate("commodities.commodity")
         // .populate("commodities.grade")
@@ -765,7 +769,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .populate("repayedBy")
         .populate("warehouse")
         .populate("project")
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -775,15 +779,15 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
     if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await disburseModel
-        .find({disbursedBy: user?._id})
+        .find({ disbursedBy: user?._id })
         .populate("farmer")
         .populate({
           path: "farmer",
-          populate: {path: "cooperative"},
+          populate: { path: "cooperative" },
         })
         // .populate("commodities.commodity")
         // .populate("commodities.grade")
@@ -792,7 +796,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
         .populate("repayedBy")
         .populate("warehouse")
         .populate("project")
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -802,16 +806,16 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
 
     const disbursement = project
       ? await disburseModel
-          .find({project})
+          .find({ project })
           .populate("farmer")
           .populate({
             path: "farmer",
-            populate: {path: "cooperative"},
+            populate: { path: "cooperative" },
           })
           // .populate("commodities.commodity")
           // .populate("commodities.grade")
@@ -820,14 +824,14 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           .populate("repayedBy")
           .populate("warehouse")
           .populate("project")
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
       : await disburseModel
           .find()
           .populate("farmer")
           .populate({
             path: "farmer",
-            populate: {path: "cooperative"},
+            populate: { path: "cooperative" },
           })
           // .populate("commodities.commodity")
           // .populate("commodities.grade")
@@ -836,7 +840,7 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
           .populate("repayedBy")
           .populate("warehouse")
           .populate("project")
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
     if (!disbursement) {
       return res.status(404).send({
@@ -846,15 +850,15 @@ export const getAllDisbursements = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disbursement})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disbursement })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const updateDisbursement = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
 
     if (!id) {
       return res.status(400).send({
@@ -866,7 +870,7 @@ export const updateDisbursement = async (req: Request, res: Response) => {
     const disburse = await disburseModel
       .findByIdAndUpdate(
         id,
-        {...req.body},
+        { ...req.body },
         {
           new: true,
           runValidators: true,
@@ -889,15 +893,15 @@ export const updateDisbursement = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Disbursement updated", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement updated", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const deleteDisbursement = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const user_role = await getUserRole(req, res)
 
     if (!id) {
@@ -944,16 +948,16 @@ export const deleteDisbursement = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Disbursement Deleted", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement Deleted", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 // cash LRP
 export const getCashLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -970,7 +974,7 @@ export const getCashLRP = async (req: Request, res: Response) => {
       })
       .populate({
         path: "disbursement",
-        populate: {path: "farmer", populate: "cooperative"},
+        populate: { path: "farmer", populate: "cooperative" },
       })
 
     if (!disburse) {
@@ -982,14 +986,14 @@ export const getCashLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const getAllCashLRP = async (req: Request, res: Response) => {
-  const {project} = req.query
+  const { project } = req.query
   const queries = req.query
 
   try {
@@ -998,7 +1002,7 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disbursement = await cashRepaymentModel
         .find({
-          disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+          disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
         })
         .populate(["disbursement", "repayedBy"])
         .populate({
@@ -1007,9 +1011,9 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
         })
         .populate({
           path: "disbursement",
-          populate: {path: "farmer", populate: "cooperative"},
+          populate: { path: "farmer", populate: "cooperative" },
         })
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -1019,11 +1023,11 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
     if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await cashRepaymentModel
-        .find({disbursedBy: user?._id})
+        .find({ disbursedBy: user?._id })
         .populate(["disbursement", "repayedBy"])
         .populate({
           path: "disbursement",
@@ -1031,9 +1035,9 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
         })
         .populate({
           path: "disbursement",
-          populate: {path: "farmer", populate: "cooperative"},
+          populate: { path: "farmer", populate: "cooperative" },
         })
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -1043,12 +1047,12 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
 
     const disbursement = project
       ? await cashRepaymentModel
-          .find({project})
+          .find({ project })
           .populate(["disbursement", "repayedBy"])
           .populate({
             path: "disbursement",
@@ -1062,9 +1066,9 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
           })
           .populate({
             path: "disbursement",
-            populate: {path: "farmer", populate: "cooperative"},
+            populate: { path: "farmer", populate: "cooperative" },
           })
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
       : await cashRepaymentModel
           .find()
@@ -1081,9 +1085,9 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
           })
           .populate({
             path: "disbursement",
-            populate: {path: "farmer", populate: "cooperative"},
+            populate: { path: "farmer", populate: "cooperative" },
           })
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
     if (!disbursement) {
       return res.status(404).send({
@@ -1093,15 +1097,15 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disbursement})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disbursement })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const updateCashLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
 
     if (!id) {
       return res.status(400).send({
@@ -1113,7 +1117,7 @@ export const updateCashLRP = async (req: Request, res: Response) => {
     const disburse = await cashRepaymentModel
       .findByIdAndUpdate(
         id,
-        {...req.body},
+        { ...req.body },
         {
           new: true,
           runValidators: true,
@@ -1126,7 +1130,7 @@ export const updateCashLRP = async (req: Request, res: Response) => {
       })
       .populate({
         path: "disbursement",
-        populate: {path: "farmer", populate: "cooperative"},
+        populate: { path: "farmer", populate: "cooperative" },
       })
     if (!disburse) {
       return res.status(404).send({
@@ -1137,15 +1141,15 @@ export const updateCashLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Disbursement updated", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement updated", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const deleteCashLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const user_role = await getUserRole(req, res)
 
     if (!id) {
@@ -1179,16 +1183,16 @@ export const deleteCashLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Disbursement Deleted", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement Deleted", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 // cash LRP
 export const getGrainLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -1210,7 +1214,7 @@ export const getGrainLRP = async (req: Request, res: Response) => {
       })
       .populate({
         path: "disbursement",
-        populate: {path: "farmer", populate: "cooperative"},
+        populate: { path: "farmer", populate: "cooperative" },
       })
 
     if (!disburse) {
@@ -1222,14 +1226,14 @@ export const getGrainLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const getAllGrainLRP = async (req: Request, res: Response) => {
-  const {project} = req.query
+  const { project } = req.query
   const queries = req.query
 
   try {
@@ -1238,7 +1242,7 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disbursement = await grainRepaymentModel
         .find({
-          disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+          disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
         })
         .populate([
           "disbursement",
@@ -1252,9 +1256,9 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
         })
         .populate({
           path: "disbursement",
-          populate: {path: "farmer", populate: "cooperative"},
+          populate: { path: "farmer", populate: "cooperative" },
         })
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -1264,11 +1268,11 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
     if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await grainRepaymentModel
-        .find({disbursedBy: user?._id})
+        .find({ disbursedBy: user?._id })
         .populate([
           "disbursement",
           "repayedBy",
@@ -1281,9 +1285,9 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
         })
         .populate({
           path: "disbursement",
-          populate: {path: "farmer", populate: "cooperative"},
+          populate: { path: "farmer", populate: "cooperative" },
         })
-        .sort({createdAt: -1})
+        .sort({ createdAt: -1 })
         .limit(Number(queries.limit))
       if (!disbursement) {
         return res.status(404).send({
@@ -1293,12 +1297,12 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: disbursement})
+        .send({ error: false, message: "Success", data: disbursement })
     }
 
     const disbursement = project
       ? await grainRepaymentModel
-          .find({project})
+          .find({ project })
           .populate([
             "disbursement",
             "repayedBy",
@@ -1317,9 +1321,9 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
           })
           .populate({
             path: "disbursement",
-            populate: {path: "farmer", populate: "cooperative"},
+            populate: { path: "farmer", populate: "cooperative" },
           })
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
       : await grainRepaymentModel
           .find()
@@ -1341,9 +1345,9 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
           })
           .populate({
             path: "disbursement",
-            populate: {path: "farmer", populate: "cooperative"},
+            populate: { path: "farmer", populate: "cooperative" },
           })
-          .sort({createdAt: -1})
+          .sort({ createdAt: -1 })
           .limit(Number(queries.limit))
     if (!disbursement) {
       return res.status(404).send({
@@ -1353,15 +1357,15 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: disbursement})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: disbursement })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const updateGrainLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
 
     if (!id) {
       return res.status(400).send({
@@ -1373,7 +1377,7 @@ export const updateGrainLRP = async (req: Request, res: Response) => {
     const disburse = await grainRepaymentModel
       .findByIdAndUpdate(
         id,
-        {...req.body},
+        { ...req.body },
         {
           new: true,
           runValidators: true,
@@ -1391,7 +1395,7 @@ export const updateGrainLRP = async (req: Request, res: Response) => {
       })
       .populate({
         path: "disbursement",
-        populate: {path: "farmer", populate: "cooperative"},
+        populate: { path: "farmer", populate: "cooperative" },
       })
     if (!disburse) {
       return res.status(404).send({
@@ -1402,15 +1406,15 @@ export const updateGrainLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Disbursement updated", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement updated", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const deleteGrainLRP = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const user_role = await getUserRole(req, res)
 
     if (!id) {
@@ -1464,9 +1468,9 @@ export const deleteGrainLRP = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Disbursement Deleted", data: disburse})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Disbursement Deleted", data: disburse })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -1475,7 +1479,7 @@ export const deleteGrainLRP = async (req: Request, res: Response) => {
 export const countLoanDisburse = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
@@ -1488,7 +1492,7 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
@@ -1496,20 +1500,20 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             project,
           })
         : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
@@ -1517,14 +1521,14 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     const disburse = project
-      ? await disburseModel.find({project})
+      ? await disburseModel.find({ project })
       : await disburseModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const amount = disburse.reduce(
       (total, d) => total + Number(d.loan_amount),
@@ -1532,16 +1536,16 @@ export const countLoanDisburse = async (req: Request, res: Response) => {
     )
     return res
       .status(200)
-      .send({error: false, message: "Success", data: amount})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: amount })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countRecoveredLoan = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
@@ -1554,7 +1558,7 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const loan_amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
@@ -1568,19 +1572,19 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       const amount = loan_amount - equity - outstanding
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             project,
           })
         : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
           })
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const loan_amount = disburse.reduce(
         (total, d) => total + Number(d.loan_amount),
@@ -1594,14 +1598,14 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
       const amount = loan_amount - equity - outstanding
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     const disburse = project
-      ? await disburseModel.find({project})
+      ? await disburseModel.find({ project })
       : await disburseModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const loan_amount = disburse.reduce(
       (total, d) => total + Number(d.loan_amount),
@@ -1615,16 +1619,16 @@ export const countRecoveredLoan = async (req: Request, res: Response) => {
     const amount = loan_amount - equity - outstanding
     return res
       .status(200)
-      .send({error: false, message: "Success", data: amount})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: amount })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countOutstandinLoan = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
@@ -1639,7 +1643,7 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const amount = disburse.reduce(
         (total, d) => total + Number(d.outstanding_loan),
@@ -1647,22 +1651,22 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             status: "NOT PAID" || "PART PAYMENT",
             project,
           })
         : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             status: "NOT PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const amount = disburse.reduce(
         (total, d) => total + Number(d.outstanding_loan),
@@ -1670,14 +1674,14 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: amount})
+        .send({ error: false, message: "Success", data: amount })
     }
     const disburse = project
-      ? await disburseModel.find({project})
+      ? await disburseModel.find({ project })
       : await disburseModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const outstanding = disburse.reduce(
       (total, d) => total + Number(d.outstanding_loan),
@@ -1685,24 +1689,24 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
     )
     return res
       .status(200)
-      .send({error: false, message: "Success", data: outstanding})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: outstanding })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countDisburseHectares = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
-        ? await disburseModel.find({disbursedBy: user?._id, project})
-        : await disburseModel.find({disbursedBy: user?._id})
+        ? await disburseModel.find({ disbursedBy: user?._id, project })
+        : await disburseModel.find({ disbursedBy: user?._id })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const hectares = disburse.reduce(
         (total, d) => total + Number(d.hectares),
@@ -1710,19 +1714,19 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: hectares})
+        .send({ error: false, message: "Success", data: hectares })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             project,
           })
         : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
           })
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const hectares = disburse.reduce(
         (total, d) => total + Number(d.hectares),
@@ -1730,14 +1734,14 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: hectares})
+        .send({ error: false, message: "Success", data: hectares })
     }
     const disburse = project
-      ? await disburseModel.find({project})
+      ? await disburseModel.find({ project })
       : await disburseModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const hectares = disburse.reduce(
       (total, d) => total + Number(d.hectares),
@@ -1745,9 +1749,9 @@ export const countDisburseHectares = async (req: Request, res: Response) => {
     )
     return res
       .status(200)
-      .send({error: false, message: "Success", data: hectares})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: hectares })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -1757,7 +1761,7 @@ export const countRecoveredGrossWeight = async (
 ) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
@@ -1772,7 +1776,7 @@ export const countRecoveredGrossWeight = async (
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const netweight = disburse.reduce(
         (total, d) => total + Number(d.net_weight),
@@ -1780,17 +1784,17 @@ export const countRecoveredGrossWeight = async (
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: netweight})
+        .send({ error: false, message: "Success", data: netweight })
     }
     const disburse = project
       ? await grainRepaymentModel.find({
           status: "PAID" || "PART PAYMENT",
           project,
         })
-      : await grainRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
+      : await grainRepaymentModel.find({ status: "PAID" || "PART PAYMENT" })
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const netweight = disburse.reduce(
       (total, d) => total + Number(d.gross_weight),
@@ -1798,16 +1802,16 @@ export const countRecoveredGrossWeight = async (
     )
     return res
       .status(200)
-      .send({error: false, message: "Success", data: netweight})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: netweight })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countRecoveredNetWeight = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
@@ -1822,7 +1826,7 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const netweight = disburse.reduce(
         (total, d) => total + Number(d.net_weight),
@@ -1830,7 +1834,7 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: netweight})
+        .send({ error: false, message: "Success", data: netweight })
     }
 
     const disburse = project
@@ -1838,10 +1842,10 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
           status: "PAID" || "PART PAYMENT",
           project,
         })
-      : await grainRepaymentModel.find({status: "PAID" || "PART PAYMENT"})
+      : await grainRepaymentModel.find({ status: "PAID" || "PART PAYMENT" })
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const netweight = disburse.reduce(
       (total, d) => total + Number(d.net_weight),
@@ -1849,16 +1853,16 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
     )
     return res
       .status(200)
-      .send({error: false, message: "Success", data: netweight})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: netweight })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countRecoveredGrains = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
@@ -1871,7 +1875,7 @@ export const countRecoveredGrains = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const grain = disburse.reduce(
         (total, d) => total + Number(d.payable_amount),
@@ -1879,7 +1883,7 @@ export const countRecoveredGrains = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: grain})
+        .send({ error: false, message: "Success", data: grain })
     }
 
     const disburse = project
@@ -1889,19 +1893,24 @@ export const countRecoveredGrains = async (req: Request, res: Response) => {
       : await grainRepaymentModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
-    const cash = disburse.reduce((total, d) => total + Number(d.payable_amount), 0)
-    return res.status(200).send({error: false, message: "Success", data: cash})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+    const cash = disburse.reduce(
+      (total, d) => total + Number(d.payable_amount),
+      0
+    )
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: cash })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countRecoveredCash = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (
       user?.role === "WAREHOUSE MANAGER" ||
@@ -1927,7 +1936,7 @@ export const countRecoveredCash = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: cash})
+        .send({ error: false, message: "Success", data: cash })
     }
     // ///////////////////////////////////////$
 
@@ -1938,19 +1947,21 @@ export const countRecoveredCash = async (req: Request, res: Response) => {
       : await cashRepaymentModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const cash = disburse.reduce((total, d) => total + Number(d.cash_paid), 0)
-    return res.status(200).send({error: false, message: "Success", data: cash})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: cash })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const countEquity = async (req: Request, res: Response) => {
   const userID = await currentUser(req, res)
   const user = await userModel.findById(userID?.userId).populate("warehouse")
-  const {project} = req.query
+  const { project } = req.query
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
@@ -1963,7 +1974,7 @@ export const countEquity = async (req: Request, res: Response) => {
           })
 
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const netweight = disburse.reduce(
         (total, d) => total + Number(d.equity),
@@ -1972,19 +1983,19 @@ export const countEquity = async (req: Request, res: Response) => {
 
       return res
         .status(200)
-        .send({error: false, message: "Success", data: netweight})
+        .send({ error: false, message: "Success", data: netweight })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
         ? await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             project,
           })
         : await disburseModel.find({
-            disbursedBy: {$in: (user?.warehouse as any)?.supervisors},
+            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
           })
       if (!disburse) {
-        return res.status(200).send({error: false, message: "not found"})
+        return res.status(200).send({ error: false, message: "not found" })
       }
       const netweight = disburse.reduce(
         (total, d) => total + Number(d.equity),
@@ -1992,21 +2003,21 @@ export const countEquity = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: netweight})
+        .send({ error: false, message: "Success", data: netweight })
     }
     const disburse = project
-      ? await disburseModel.find({project})
+      ? await disburseModel.find({ project })
       : await disburseModel.find()
 
     if (!disburse) {
-      return res.status(200).send({error: false, message: "not found"})
+      return res.status(200).send({ error: false, message: "not found" })
     }
     const netweight = disburse.reduce((total, d) => total + Number(d.equity), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: netweight})
-  } catch (error: any) {
-    res.send({error: true, message: (error as any)?.message})
+      .send({ error: false, message: "Success", data: netweight })
+  } catch (error) {
+    res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -2018,51 +2029,135 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: user?._id,
-            project,
-            status: "PAID" || "PART PAYMENT"
-          })
-        : await disburseModel.find({
-            disbursedBy: user?._id,
-             status: "PAID" || "PART PAYMENT"
-          })
+        ? await disburseModel
+            .find({
+              disbursedBy: user?._id,
+              project,
+              status: "PAID" || "PART PAYMENT",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
+        : await disburseModel
+            .find({
+              disbursedBy: user?._id,
+              status: "PAID" || "PART PAYMENT",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
 
       if (!disburse) {
         return res.status(200).send({ error: false, message: "not found" })
       }
-    
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: disburse })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-            project,
-            status: "PAID" || "PART PAYMENT"
-          })
-        : await disburseModel.find({
-            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-            status: "PAID" || "PART PAYMENT"
-          })
+        ? await disburseModel
+            .find({
+              disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+              project,
+              status: "PAID" || "PART PAYMENT",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
+        : await disburseModel
+            .find({
+              disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+              status: "PAID" || "PART PAYMENT",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
       if (!disburse) {
         return res.status(200).send({ error: false, message: "not found" })
       }
-    
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: disburse })
     }
     const disburse = project
-      ? await disburseModel.find({ project,status: "PAID" || "PART PAYMENT" })
-      : await disburseModel.find({status: "PAID" || "PART PAYMENT"})
+      ? await disburseModel
+          .find({ project, status: "PAID" || "PART PAYMENT" })
+          .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: { path: "cooperative" },
+          })
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .populate("warehouse")
+          .populate("project")
+          .sort({ createdAt: -1 })
+      : await disburseModel
+          .find({ status: "PAID" || "PART PAYMENT" })
+          .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: { path: "cooperative" },
+          })
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .populate("warehouse")
+          .populate("project")
+          .sort({ createdAt: -1 })
 
     if (!disburse) {
       return res.status(200).send({ error: false, message: "not found" })
     }
- 
+
     return res
       .status(200)
       .send({ error: false, message: "Success", data: disburse })
@@ -2078,51 +2173,135 @@ export const getOutstandingLoan = async (req: Request, res: Response) => {
   try {
     if (user?.role === "WAREHOUSE ADMIN") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: user?._id,
-            project,
-            status: "NOT PAID"
-          })
-        : await disburseModel.find({
-            disbursedBy: user?._id,
-             status: "NOT PAID"
-          })
+        ? await disburseModel
+            .find({
+              disbursedBy: user?._id,
+              project,
+              status: "NOT PAID",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
+        : await disburseModel
+            .find({
+              disbursedBy: user?._id,
+              status: "NOT PAID",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
 
       if (!disburse) {
         return res.status(200).send({ error: false, message: "not found" })
       }
-    
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: disburse })
     }
     if (user?.role === "WAREHOUSE MANAGER") {
       const disburse = project
-        ? await disburseModel.find({
-            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-            project,
-            status: "NOT PAID"
-          })
-        : await disburseModel.find({
-            disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-            status: "NOT PAID"
-          })
+        ? await disburseModel
+            .find({
+              disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+              project,
+              status: "NOT PAID",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
+        : await disburseModel
+            .find({
+              disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+              status: "NOT PAID",
+            })
+            .populate("farmer")
+            .populate({
+              path: "farmer",
+              populate: { path: "cooperative" },
+            })
+            // .populate("commodities.commodity")
+            // .populate("commodities.grade")
+            .populate("bundle")
+            .populate("disbursedBy")
+            .populate("repayedBy")
+            .populate("warehouse")
+            .populate("project")
+            .sort({ createdAt: -1 })
       if (!disburse) {
         return res.status(200).send({ error: false, message: "not found" })
       }
-    
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: disburse })
     }
     const disburse = project
-      ? await disburseModel.find({ project,status: "NOT PAID"})
-      : await disburseModel.find({status: "NOT PAID"})
+      ? await disburseModel
+          .find({ project, status: "NOT PAID" })
+          .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: { path: "cooperative" },
+          })
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .populate("warehouse")
+          .populate("project")
+          .sort({ createdAt: -1 })
+      : await disburseModel
+          .find({ status: "NOT PAID" })
+          .populate("farmer")
+          .populate({
+            path: "farmer",
+            populate: { path: "cooperative" },
+          })
+          // .populate("commodities.commodity")
+          // .populate("commodities.grade")
+          .populate("bundle")
+          .populate("disbursedBy")
+          .populate("repayedBy")
+          .populate("warehouse")
+          .populate("project")
+          .sort({ createdAt: -1 })
 
     if (!disburse) {
       return res.status(200).send({ error: false, message: "not found" })
     }
- 
+
     return res
       .status(200)
       .send({ error: false, message: "Success", data: disburse })
