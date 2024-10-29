@@ -7,6 +7,7 @@ export interface IWarehouse {
     quantity: number
     weight: number
     grade: string
+    type: string
   }[]
   state?: string
   lga?: string

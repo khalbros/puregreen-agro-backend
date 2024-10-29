@@ -1,17 +1,17 @@
-import {Request, Response} from "express"
+import { Request, Response } from "express"
 import {
   commodityModel,
   dispatchModel,
   userModel,
   warehouseModel,
 } from "../models"
-import {ICommodity} from "../types/commodity"
-import {currentUser, getUserId, getUserRole} from "../utils"
-import {IGrade} from "../types/grade"
+import { ICommodity } from "../types/commodity"
+import { currentUser, getUserId, getUserRole } from "../utils"
+import { IGrade } from "../types/grade"
 
 export const createCommodity = async (req: Request, res: Response) => {
   try {
-    const {name, price}: ICommodity = req.body
+    const { name, price }: ICommodity = req.body
 
     if (!name || !price) {
       return res.status(400).send({
@@ -25,7 +25,7 @@ export const createCommodity = async (req: Request, res: Response) => {
     if (nameCheck) {
       return res
         .status(400)
-        .send({error: true, message: "commodity already exist"})
+        .send({ error: true, message: "commodity already exist" })
     }
 
     const newCommodity = await commodityModel.create({
@@ -39,24 +39,27 @@ export const createCommodity = async (req: Request, res: Response) => {
         () => {
           return res
             .status(201)
-            .send({error: false, message: "commodity created successfully"})
+            .send({ error: false, message: "commodity created successfully" })
         },
         (err) => {
-          return res.send({error: true, message: err?.message})
+          return res.send({ error: true, message: err?.message })
         }
       )
       .catch((err) => {
-        return res.send({error: true, message: err?.message})
+        return res.send({ error: true, message: err?.message })
       })
-  } catch (error: any) {
-    return res.send({error: true, message: error?.message})
+  } catch (error) {
+    return res.send({
+      error: true,
+      message: ((error as unknown) as any)?.message,
+    })
   }
 }
 
 export const getCommodity = async (req: Request, res: Response) => {
   try {
     const userRole = await getUserRole(req, res)
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -67,7 +70,7 @@ export const getCommodity = async (req: Request, res: Response) => {
     const commodity =
       userRole != "SUPER ADMIN" && userRole != "DATA ANALYST"
         ? await commodityModel
-            .findById({_id: id, isApproved: true})
+            .findById({ _id: id, isApproved: true })
             .populate("grade")
         : await commodityModel.findById(id).populate("grade")
     if (!commodity) {
@@ -79,9 +82,9 @@ export const getCommodity = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Success", data: commodity})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: commodity })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
@@ -91,8 +94,8 @@ export const getAllApprovedCommodities = async (
 ) => {
   try {
     const commodities = await commodityModel
-      .find({isApproved: true})
-      .sort({createAt: -1})
+      .find({ isApproved: true })
+      .sort({ createAt: -1 })
     if (!commodities) {
       return res.status(404).send({
         error: true,
@@ -101,15 +104,15 @@ export const getAllApprovedCommodities = async (
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: commodities})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: commodities })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
 export const getAllCommodities = async (req: Request, res: Response) => {
   try {
-    const commodities = await commodityModel.find().sort({createAt: -1})
+    const commodities = await commodityModel.find().sort({ createAt: -1 })
     if (!commodities) {
       return res.status(404).send({
         error: true,
@@ -118,15 +121,15 @@ export const getAllCommodities = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: commodities})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: commodities })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
 export const updateCommodity = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -140,7 +143,7 @@ export const updateCommodity = async (req: Request, res: Response) => {
         runValidators: true,
       })
       .populate("grade")
-      .sort({createAt: -1})
+      .sort({ createAt: -1 })
     if (!commodity) {
       return res.status(404).send({
         error: true,
@@ -150,15 +153,15 @@ export const updateCommodity = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Commodity updated", data: commodity})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Commodity updated", data: commodity })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
 export const deleteCommodity = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const user_role = await getUserRole(req, res)
 
     if (!id) {
@@ -178,15 +181,15 @@ export const deleteCommodity = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Commodity Deleted", data: commodity})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Commodity Deleted", data: commodity })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
 export const getCommodityByWarehouse = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -198,7 +201,7 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
       .findById(id)
       .populate("commodities.commodity")
       .populate("commodities.grade")
-      .sort({createAt: -1})
+      .sort({ createAt: -1 })
 
     if (!warehouse) {
       return res.status(404).send({
@@ -210,18 +213,19 @@ export const getCommodityByWarehouse = async (req: Request, res: Response) => {
     const commodities = warehouse.commodities
     return res
       .status(200)
-      .send({error: false, message: "Success", data: commodities})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: commodities })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
+
 export const deleteCommodityByWarehouse = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const {id} = req.params
-    const {commodity_id} = req.query
+    const { id } = req.params
+    const { commodity_id } = req.query
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -233,7 +237,7 @@ export const deleteCommodityByWarehouse = async (
       .findById(id)
       .populate("commodities.commodity")
       .populate("commodities.grade")
-      .sort({createAt: -1})
+      .sort({ createAt: -1 })
 
     if (!warehouse) {
       return res.status(404).send({
@@ -249,9 +253,9 @@ export const deleteCommodityByWarehouse = async (
     await warehouse.save()
     return res
       .status(200)
-      .send({error: false, message: "Success", data: commodities})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: commodities })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
@@ -262,7 +266,7 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
   try {
     const userID = await currentUser(req, res)
     const user = await userModel.findById(userID?.userId).populate("warehouse")
-    const {id} = req.params
+    const { id } = req.params
     if (!user) {
       return res.status(400).send({
         error: true,
@@ -274,7 +278,7 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
         .findById(user?.warehouse)
         .populate("commodities.commodity")
         .populate("commodities.grade")
-        .sort({createAt: -1})
+        .sort({ createAt: -1 })
 
       if (!warehouse) {
         return res.status(404).send({
@@ -290,7 +294,7 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: grossweight})
+        .send({ error: false, message: "Success", data: grossweight })
     }
 
     // admin users
@@ -298,7 +302,7 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
       .find()
       .populate("commodities.commodity")
       .populate("commodities.grade")
-      .sort({createAt: -1})
+      .sort({ createAt: -1 })
 
     if (!warehouses) {
       return res.status(404).send({
@@ -312,9 +316,9 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
     const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: grossweight})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 // counts
@@ -322,7 +326,7 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
   try {
     const userID = await currentUser(req, res)
     const user = await userModel.findById(userID?.userId).populate("warehouse")
-    const {id} = req.params
+    const { id } = req.params
     if (!user) {
       return res.status(400).send({
         error: true,
@@ -334,7 +338,7 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
         .findById(user?.warehouse)
         .populate("commodities.commodity")
         .populate("commodities.grade")
-        .sort({createAt: -1})
+        .sort({ createAt: -1 })
 
       if (!warehouse) {
         return res.status(404).send({
@@ -350,7 +354,7 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
       )
       return res
         .status(200)
-        .send({error: false, message: "Success", data: grossweight})
+        .send({ error: false, message: "Success", data: grossweight })
     }
 
     // admin users
@@ -358,7 +362,7 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
       .find()
       .populate("commodities.commodity")
       .populate("commodities.grade")
-      .sort({createAt: -1})
+      .sort({ createAt: -1 })
 
     if (!warehouses) {
       return res.status(404).send({
@@ -375,9 +379,395 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
     const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: grossweight})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+// gross weight
+export const countGWByLoan = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Loan")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Loan"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+export const countGWByTrade = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Trade")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Trade"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+export const countGWByStorage = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Storage")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Storage"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+// net weight
+export const countNWByLoan = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Loan")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.net_weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Loan"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.net_weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+export const countNWByTrade = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Trade")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.net_weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Trade"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.net_weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
+  }
+}
+export const countNWByStorage = async (req: Request, res: Response) => {
+  try {
+    const userID = await currentUser(req, res)
+    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const { id } = req.params
+    if (!user) {
+      return res.status(400).send({
+        error: true,
+        message: "Error (Invalide User)",
+      })
+    }
+    if (user?.role === "WAREHOUSE MANAGER") {
+      const warehouse = await warehouseModel
+        .findById(user?.warehouse)
+        .populate("commodities.commodity")
+        .populate("commodities.grade")
+        .sort({ createAt: -1 })
+
+      if (!warehouse) {
+        return res.status(404).send({
+          error: true,
+          message: "Warehouse not found",
+        })
+      }
+
+      const commodities = warehouse.commodities
+      const filteredCom = commodities.filter((item) => item.type === "Storage")
+      const grossweight = filteredCom.reduce(
+        (total, d) => total + Number(d.net_weight),
+        0
+      )
+      return res
+        .status(200)
+        .send({ error: false, message: "Success", data: grossweight })
+    }
+
+    // admin users
+    const warehouses = await warehouseModel
+      .find()
+      .populate("commodities.commodity")
+      .populate("commodities.grade")
+      .sort({ createAt: -1 })
+
+    if (!warehouses) {
+      return res.status(404).send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
+    const commodities = warehouses.map((warehouse) => {
+      const filteredCom = warehouse.commodities.filter(
+        (item) => item.type === "Storage"
+      )
+      return filteredCom.reduce((total, d) => total + Number(d.net_weight), 0)
+    })
+
+    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
+    return res
+      .status(200)
+      .send({ error: false, message: "Success", data: grossweight })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -443,7 +833,7 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
 //       .status(200)
 //       .send({error: false, message: "Success", data: netweight})
 //   } catch (error: any) {
-//     res.send({error: true, message: error?.message})
+//     res.send({error: true, message:(error as unknown as any)?.message})
 //   }
 // }
 
@@ -457,7 +847,7 @@ export const countCommoditiesReceived = async (req: Request, res: Response) => {
     })
   }
   try {
-    const dispatchs = await dispatchModel.find({warehouse: user?.warehouse})
+    const dispatchs = await dispatchModel.find({ warehouse: user?.warehouse })
     if (!dispatchs) {
       return res.status(404).send({
         error: true,
@@ -471,9 +861,9 @@ export const countCommoditiesReceived = async (req: Request, res: Response) => {
     const bags = dispatchs.reduce((total, d) => total + Number(d.num_bags), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: {weight, bags}})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: { weight, bags } })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }
 
@@ -487,7 +877,7 @@ export const countCommoditiesOut = async (req: Request, res: Response) => {
     })
   }
   try {
-    const dispatchs = await dispatchModel.find({createdBy: user?._id})
+    const dispatchs = await dispatchModel.find({ createdBy: user?._id })
     if (!dispatchs) {
       return res.status(404).send({
         error: true,
@@ -501,8 +891,8 @@ export const countCommoditiesOut = async (req: Request, res: Response) => {
     const bags = dispatchs.reduce((total, d) => total + Number(d.num_bags), 0)
     return res
       .status(200)
-      .send({error: false, message: "Success", data: {weight, bags}})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: { weight, bags } })
+  } catch (error) {
+    res.send({ error: true, message: ((error as unknown) as any)?.message })
   }
 }

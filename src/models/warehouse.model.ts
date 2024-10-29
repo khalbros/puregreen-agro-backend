@@ -1,4 +1,4 @@
-import {Schema, model} from "mongoose"
+import { Schema, model } from "mongoose"
 
 const warehouseSchema = new Schema(
   {
@@ -37,13 +37,14 @@ const warehouseSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "Commodity",
         },
-        weight: {type: Number, required: true},
-        net_weight: {type: Number, required: true},
-        quantity: {type: Number, required: true},
+        weight: { type: Number, required: true },
+        net_weight: { type: Number, required: true },
+        quantity: { type: Number, required: true },
         grade: {
           type: Schema.Types.ObjectId,
           ref: "Grade",
         },
+        type: { type: String },
       },
     ],
     warehouse_manager: {
@@ -57,7 +58,7 @@ const warehouseSchema = new Schema(
       },
     ],
   },
-  {timestamps: true}
+  { timestamps: true }
 )
 
 export const warehouseModel = model("Warehouse", warehouseSchema)

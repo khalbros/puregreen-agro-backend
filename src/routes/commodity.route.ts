@@ -1,7 +1,10 @@
-import {Router} from "express"
+import { Router } from "express"
 import {
   countCommoditiesOut,
   countCommoditiesReceived,
+  countGWByLoan,
+  countGWByStorage,
+  countGWByTrade,
   countGWByWarehouse,
   countNWByWarehouse,
   createCommodity,
@@ -35,5 +38,8 @@ router.get("/count/received", isWarehouseManager, countCommoditiesReceived)
 router.get("/count/sent", isWarehouseManager, countCommoditiesOut)
 router.get("/count/grossweight", isLoggedIn, countGWByWarehouse)
 router.get("/count/netweight", isLoggedIn, countNWByWarehouse)
+router.get("/count/loan/weight", isLoggedIn, countGWByLoan)
+router.get("/count/trade/weight", isLoggedIn, countGWByTrade)
+router.get("/count/storage/weight", isLoggedIn, countGWByStorage)
 
 export default router

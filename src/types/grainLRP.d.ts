@@ -1,4 +1,4 @@
-import {IDisburse} from "./disburse"
+import { IDisburse } from "./disburse"
 
 export interface IGrainLRP extends IDisburse {
   _id?: string
@@ -19,6 +19,7 @@ export interface IGrainLRP extends IDisburse {
   logistics_fee?: number
   processing_fee?: number
   status?: string
+  warehouse?: string
   repayedBy?: string
   createdAt?: string
   updatedAt?: string

@@ -1,12 +1,12 @@
-import {Request, Response} from "express"
+import { Request, Response } from "express"
 import {
   clientModel,
   transactionModel,
   userModel,
   warehouseModel,
 } from "../models"
-import {ITransaction} from "../types/transaction"
-import {currentUser, getUserId, getUserRole} from "../utils"
+import { ITransaction } from "../types/transaction"
+import { currentUser, getUserId, getUserRole } from "../utils"
 
 export const createTransaction = async (req: Request, res: Response) => {
   try {
@@ -52,7 +52,7 @@ export const createTransaction = async (req: Request, res: Response) => {
         message: "transactions error (duration field empty)",
       })
     }
-    const clientCheck = await clientModel.findOne({client_id: client})
+    const clientCheck = await clientModel.findOne({ client_id: client })
     if (!clientCheck) {
       return res.status(400).send({
         error: true,
@@ -76,20 +76,20 @@ export const createTransaction = async (req: Request, res: Response) => {
           })
         },
         (err) => {
-          return res.send({error: true, message: err?.message})
+          return res.send({ error: true, message: err?.message })
         }
       )
       .catch((err) => {
-        return res.send({error: true, message: err?.message})
+        return res.send({ error: true, message: err?.message })
       })
-  } catch (error: any) {
-    return res.send({error: true, message: error?.message})
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const getTransaction = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     if (!id) {
       return res.status(400).send({
         error: true,
@@ -99,11 +99,11 @@ export const getTransaction = async (req: Request, res: Response) => {
 
     const transaction = await transactionModel
       .findById(id)
-      .sort({createdAt: -1})
+      .sort({ createdAt: -1 })
       .populate("client")
       .populate("commodity")
       .populate("commodity.grade")
-      .populate("createdBy", {name: true})
+      .populate("createdBy", { name: true })
     if (!transaction) {
       return res.status(404).send({
         error: true,
@@ -113,25 +113,25 @@ export const getTransaction = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Success", data: transaction})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: transaction })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const getAllTransactions = async (req: Request, res: Response) => {
   try {
     const user = await currentUser(req, res)
-    const {type} = req.query
+    const { type } = req.query
     if (type != "" && type) {
       if (user?.role === "WAREHOUSE MANAGER") {
         const transactions = await transactionModel
-          .find({createdBy: user.userId, type})
-          .sort({createdAt: -1})
+          .find({ createdBy: user.userId, type })
+          .sort({ createdAt: -1 })
           .populate("client")
           .populate("commodity")
           .populate("grade")
-          .populate("createdBy", {name: true})
+          .populate("createdBy", { name: true })
         if (!transactions) {
           return res.status(404).send({
             error: true,
@@ -140,15 +140,15 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         }
         return res
           .status(200)
-          .send({error: false, message: "Success", data: transactions})
+          .send({ error: false, message: "Success", data: transactions })
       }
       const transactions = await transactionModel
-        .find({type})
-        .sort({createdAt: -1})
+        .find({ type })
+        .sort({ createdAt: -1 })
         .populate("client")
         .populate("commodity")
         .populate("grade")
-        .populate("createdBy", {name: true})
+        .populate("createdBy", { name: true })
       if (!transactions) {
         return res.status(404).send({
           error: true,
@@ -157,17 +157,17 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: transactions})
+        .send({ error: false, message: "Success", data: transactions })
     }
 
     if (user?.role === "WAREHOUSE MANAGER") {
       const transactions = await transactionModel
-        .find({createdBy: user.userId})
-        .sort({createdAt: -1})
+        .find({ createdBy: user.userId })
+        .sort({ createdAt: -1 })
         .populate("client")
         .populate("commodity")
         .populate("grade")
-        .populate("createdBy", {name: true})
+        .populate("createdBy", { name: true })
       if (!transactions) {
         return res.status(404).send({
           error: true,
@@ -176,15 +176,15 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({error: false, message: "Success", data: transactions})
+        .send({ error: false, message: "Success", data: transactions })
     }
     const transactions = await transactionModel
       .find()
-      .sort({createdAt: -1})
+      .sort({ createdAt: -1 })
       .populate("client")
       .populate("commodity")
       .populate("grade")
-      .populate("createdBy", {name: true})
+      .populate("createdBy", { name: true })
     if (!transactions) {
       return res.status(404).send({
         error: true,
@@ -193,16 +193,16 @@ export const getAllTransactions = async (req: Request, res: Response) => {
     }
     return res
       .status(200)
-      .send({error: false, message: "Success", data: transactions})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Success", data: transactions })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const updateTransaction = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
-    const {client} = req.body
+    const { id } = req.params
+    const { client } = req.body
     let clientID
 
     if (!id) {
@@ -226,7 +226,7 @@ export const updateTransaction = async (req: Request, res: Response) => {
     }
     const transaction = await transactionModel.findByIdAndUpdate(
       id,
-      {...req.body, client: client && clientID},
+      { ...req.body, client: client && clientID },
       {
         new: true,
         runValidators: true,
@@ -241,9 +241,9 @@ export const updateTransaction = async (req: Request, res: Response) => {
 
     return res
       .status(200)
-      .send({error: false, message: "Transaction updated", data: transaction})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Transaction updated", data: transaction })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
@@ -251,8 +251,8 @@ export const approveTransaction = async (req: Request, res: Response) => {
   try {
     const userID = await getUserId(req, res)
     const user = await userModel.findById(userID)
-    const {id} = req.params
-    const {status} = req.body
+    const { id } = req.params
+    const { status } = req.body
 
     if (!id) {
       return res.status(400).send({
@@ -263,7 +263,7 @@ export const approveTransaction = async (req: Request, res: Response) => {
 
     const transac = await transactionModel.findByIdAndUpdate(
       id,
-      {status},
+      { status },
       {
         new: true,
         runValidators: true,
@@ -289,14 +289,18 @@ export const approveTransaction = async (req: Request, res: Response) => {
     const comm = warehouse?.commodities.find((commodity) => {
       return (
         String(commodity.commodity) === String(transac.commodity) &&
-        String(commodity.grade) === String(transac.grade)
+        String(commodity.grade) === String(transac.grade) &&
+        String(commodity.type).toLocaleLowerCase() ===
+          String(transac.type).toLocaleLowerCase()
       )
     })
     if (comm) {
       warehouse.commodities = warehouse?.commodities.map((commodity) => {
         if (
           String(commodity.commodity) === String(transac.commodity) &&
-          String(commodity.grade) === String(transac.grade)
+          String(commodity.grade) === String(transac.grade) &&
+          String(commodity.type).toLocaleLowerCase() ===
+            String(transac.type).toLocaleLowerCase()
         ) {
           commodity.quantity =
             Number(commodity.quantity) + Number(transac.num_bags)
@@ -318,21 +322,22 @@ export const approveTransaction = async (req: Request, res: Response) => {
         weight: Number(transac.gross_weight),
         net_weight: Number(transac.net_weight),
         grade: transac.grade,
+        type: transac.type,
       })
       await warehouse.save()
     }
 
     return res
       .status(200)
-      .send({error: false, message: "transaction approved", data: transac})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "transaction approved", data: transac })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
 
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const user_role = await getUserRole(req, res)
 
     if (!id) {
@@ -350,53 +355,57 @@ export const deleteTransaction = async (req: Request, res: Response) => {
       })
     }
 
-    // const warehouse = await warehouseModel.findOne({
-    //   warehouse_manager: transac.createdBy,
-    // })
+    const warehouse = await warehouseModel.findOne({
+      warehouse_manager: transac.createdBy,
+    })
 
-    // if (!warehouse) {
-    //   return res.send({
-    //     error: true,
-    //     message: "Warehouse not found",
-    //   })
-    // }
+    if (!warehouse) {
+      return res.send({
+        error: true,
+        message: "Warehouse not found",
+      })
+    }
 
-    // const comm = warehouse?.commodities.find((commodity) => {
-    //   return (
-    //     String(commodity.commodity) === String(transac.commodity) &&
-    //     String(commodity.grade) === String(transac.grade)
-    //   )
-    // })
-    // if (comm) {
-    //   warehouse.commodities = warehouse?.commodities.map((commodity) => {
-    //     if (
-    //       String(commodity.commodity) === String(transac.commodity) &&
-    //       String(commodity.grade) === String(transac.grade)
-    //     ) {
-    //       commodity.quantity =
-    //         Number(commodity.quantity) - Number(transac.num_bags)
-    //       commodity.weight =
-    //         Number(commodity.weight) - Number(transac.gross_weight)
-    //       commodity.net_weight =
-    //         Number(commodity.net_weight) - Number(transac.net_weight)
-    //       commodity.grade = transac.grade
-    //       return commodity
-    //     } else {
-    //       return commodity
-    //     }
-    //   }) as never
-    //   await warehouse.save()
-    // } else {
-    //   return res.send({
-    //     error: true,
-    //     message: "Commodity not found",
-    //   })
-    // }
+    const comm = warehouse?.commodities.find((commodity) => {
+      return (
+        String(commodity.commodity) === String(transac.commodity) &&
+        String(commodity.grade) === String(transac.grade) &&
+        String(commodity.type).toLocaleLowerCase() ===
+          String(transac.type).toLocaleLowerCase()
+      )
+    })
+    if (comm) {
+      warehouse.commodities = warehouse?.commodities.map((commodity) => {
+        if (
+          String(commodity.commodity) === String(transac.commodity) &&
+          String(commodity.grade) === String(transac.grade) &&
+          String(commodity.type).toLocaleLowerCase() ===
+            String(transac.type).toLocaleLowerCase()
+        ) {
+          commodity.quantity =
+            Number(commodity.quantity) - Number(transac.num_bags)
+          commodity.weight =
+            Number(commodity.weight) - Number(transac.gross_weight)
+          commodity.net_weight =
+            Number(commodity.net_weight) - Number(transac.net_weight)
+          commodity.grade = transac.grade
+          return commodity
+        } else {
+          return commodity
+        }
+      }) as never
+      await warehouse.save()
+    } else {
+      return res.send({
+        error: true,
+        message: "Commodity not found",
+      })
+    }
 
     return res
       .status(200)
-      .send({error: false, message: "Transaction Deleted", data: transac})
-  } catch (error: any) {
-    res.send({error: true, message: error?.message})
+      .send({ error: false, message: "Transaction Deleted", data: transac })
+  } catch (error) {
+    return res.send({ error: true, message: (error as any)?.message })
   }
 }
