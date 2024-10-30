@@ -416,9 +416,15 @@ export const countGWByLoan = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.weight),
         0
       )
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: grossweight })
+      const bags = filteredCom.reduce(
+        (total, d) => total + Number(d.quantity),
+        0
+      )
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: { bags, weight: grossweight },
+      })
     }
 
     // admin users
@@ -438,13 +444,22 @@ export const countGWByLoan = async (req: Request, res: Response) => {
       const filteredCom = warehouse.commodities.filter(
         (item) => item.type === "Loan"
       )
-      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+      return {
+        bags: filteredCom.reduce((total, d) => total + Number(d.quantity), 0),
+        weight: filteredCom.reduce((total, d) => total + Number(d.weight), 0),
+      }
     })
 
-    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
-    return res
-      .status(200)
-      .send({ error: false, message: "Success", data: grossweight })
+    const grossweight = commodities.reduce(
+      (total, d) => total + Number(d.weight),
+      0
+    )
+    const bags = commodities.reduce((total, d) => total + Number(d.bags), 0)
+    return res.status(200).send({
+      error: false,
+      message: "Success",
+      data: { bags, weight: grossweight },
+    })
   } catch (error) {
     return res.send({ error: true, message: (error as any)?.message })
   }
@@ -480,9 +495,15 @@ export const countGWByTrade = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.weight),
         0
       )
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: grossweight })
+      const bags = filteredCom.reduce(
+        (total, d) => total + Number(d.quantity),
+        0
+      )
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: { bags, weight: grossweight },
+      })
     }
 
     // admin users
@@ -502,13 +523,19 @@ export const countGWByTrade = async (req: Request, res: Response) => {
       const filteredCom = warehouse.commodities.filter(
         (item) => item.type === "Trade"
       )
-      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+      return {
+        bags: filteredCom.reduce((total, d) => total + Number(d.quantity), 0),
+        weight: filteredCom.reduce((total, d) => total + Number(d.weight), 0),
+      }
     })
 
     const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
-    return res
-      .status(200)
-      .send({ error: false, message: "Success", data: grossweight })
+    const bags = commodities.reduce((total, d) => total + Number(d.bags), 0)
+    return res.status(200).send({
+      error: false,
+      message: "Success",
+      data: { bags, weight: grossweight },
+    })
   } catch (error) {
     return res.send({ error: true, message: (error as any)?.message })
   }
@@ -544,9 +571,15 @@ export const countGWByStorage = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.weight),
         0
       )
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: grossweight })
+      const bags = filteredCom.reduce(
+        (total, d) => total + Number(d.quantity),
+        0
+      )
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: { bags, weight: grossweight },
+      })
     }
 
     // admin users
@@ -566,13 +599,19 @@ export const countGWByStorage = async (req: Request, res: Response) => {
       const filteredCom = warehouse.commodities.filter(
         (item) => item.type === "Storage"
       )
-      return filteredCom.reduce((total, d) => total + Number(d.weight), 0)
+      return {
+        bags: filteredCom.reduce((total, d) => total + Number(d.quantity), 0),
+        weight: filteredCom.reduce((total, d) => total + Number(d.weight), 0),
+      }
     })
 
     const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
-    return res
-      .status(200)
-      .send({ error: false, message: "Success", data: grossweight })
+    const bags = commodities.reduce((total, d) => total + Number(d.bags), 0)
+    return res.status(200).send({
+      error: false,
+      message: "Success",
+      data: { bags, weight: grossweight },
+    })
   } catch (error) {
     return res.send({ error: true, message: (error as any)?.message })
   }
