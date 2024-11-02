@@ -80,7 +80,7 @@ export const loanDisbursement = async (req: Request, res: Response) => {
       $and: [
         {
           farmer: farmerCheck?._id,
-          status: { $or: ["PAID", "PART PAYMENT"] },
+          status: "PAID" || "PART PAYMENT",
         },
       ],
     })
@@ -1642,14 +1642,15 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
       const disburse = project
         ? await disburseModel.find({
             disbursedBy: user?._id,
-            status: { $or: ["NOT PAID", "PART PAYMENT"] },
+            status: "NOT PAID" || "PART PAYMENT",
             project,
           })
         : await disburseModel.find({
             disbursedBy: user?._id,
-            status: { $or: ["NOT PAID", "PART PAYMENT"] },
+            status: "NOT PAID" || "PART PAYMENT",
           })
 
+      console.log(user?.role)
       if (!disburse) {
         return res.status(200).send({ error: false, message: "not found" })
       }
@@ -1657,6 +1658,7 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.outstanding_loan),
         0
       )
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: amount })
@@ -1666,11 +1668,11 @@ export const countOutstandinLoan = async (req: Request, res: Response) => {
         ? await disburseModel.find({
             disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
             project,
-            status: { $or: ["NOT PAID", "PART PAYMENT"] },
+            status: "NOT PAID" || "PART PAYMENT",
           })
         : await disburseModel.find({
             disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-            status: { $or: ["NOT PAID", "PART PAYMENT"] },
+            status: "NOT PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -1776,11 +1778,11 @@ export const countRecoveredGrossWeight = async (
         ? await grainRepaymentModel.find({
             repayedBy: user?._id,
             project,
-            status: { $or: ["PAID", "PART PAYMENT"] },
+            status: "PAID" || "PART PAYMENT",
           })
         : await grainRepaymentModel.find({
             repayedBy: user?._id,
-            status: { $or: ["PAID", "PART PAYMENT"] },
+            status: "PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -1797,10 +1799,10 @@ export const countRecoveredGrossWeight = async (
     const disburse = project
       ? await grainRepaymentModel.find({
           project,
-          status: { $or: ["PAID", "PART PAYMENT"] },
+          status: "PAID" || "PART PAYMENT",
         })
       : await grainRepaymentModel.find({
-          status: { $or: ["PAID", "PART PAYMENT"] },
+          status: "PAID" || "PART PAYMENT",
         })
 
     if (!disburse) {
@@ -1828,11 +1830,11 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
         ? await grainRepaymentModel.find({
             repayedBy: user?._id,
             project,
-            status: { $or: ["PAID", "PART PAYMENT"] },
+            status: "PAID" || "PART PAYMENT",
           })
         : await grainRepaymentModel.find({
             repayedBy: user?._id,
-            status: { $or: ["PAID", "PART PAYMENT"] },
+            status: "PAID" || "PART PAYMENT",
           })
 
       if (!disburse) {
@@ -1850,10 +1852,10 @@ export const countRecoveredNetWeight = async (req: Request, res: Response) => {
     const disburse = project
       ? await grainRepaymentModel.find({
           project,
-          status: { $or: ["PAID", "PART PAYMENT"] },
+          status: "PAID" || "PART PAYMENT",
         })
       : await grainRepaymentModel.find({
-          status: { $or: ["PAID", "PART PAYMENT"] },
+          status: "PAID" || "PART PAYMENT",
         })
 
     if (!disburse) {
@@ -2045,7 +2047,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
             .find({
               disbursedBy: user?._id,
               project,
-              status: { $or: ["PAID", "PART PAYMENT"] },
+              status: "PAID" || "PART PAYMENT",
             })
             .populate("farmer")
             .populate({
@@ -2063,7 +2065,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
         : await disburseModel
             .find({
               disbursedBy: user?._id,
-              status: { $or: ["PAID", "PART PAYMENT"] },
+              status: "PAID" || "PART PAYMENT",
             })
             .populate("farmer")
             .populate({
@@ -2093,7 +2095,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
             .find({
               disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
               project,
-              status: { $or: ["PAID", "PART PAYMENT"] },
+              status: "PAID" || "PART PAYMENT",
             })
             .populate("farmer")
             .populate({
@@ -2111,7 +2113,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
         : await disburseModel
             .find({
               disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
-              status: { $or: ["PAID", "PART PAYMENT"] },
+              status: "PAID" || "PART PAYMENT",
             })
             .populate("farmer")
             .populate({
@@ -2138,7 +2140,7 @@ export const getRecoveredLoan = async (req: Request, res: Response) => {
       ? await disburseModel
           .find({
             project,
-            status: { $or: ["PAID", "PART PAYMENT"] },
+            status: "PAID" || "PART PAYMENT",
           })
           .populate("farmer")
           .populate({
