@@ -292,9 +292,15 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.weight),
         0
       )
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: grossweight })
+      const quantity = commodities.reduce(
+        (total, d) => total + Number(d.quantity),
+        0
+      )
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: { quantity, weight: grossweight },
+      })
     }
 
     // admin users
@@ -310,13 +316,31 @@ export const countGWByWarehouse = async (req: Request, res: Response) => {
         message: "Warehouse not found",
       })
     }
-    const commodities = warehouses.map((warehouse) =>
-      warehouse.commodities.reduce((total, d) => total + Number(d.weight), 0)
+    const commodities = warehouses.map((warehouse) => {
+      return {
+        weight: warehouse.commodities.reduce(
+          (total, d) => total + Number(d.weight),
+          0
+        ),
+        quantity: warehouse.commodities.reduce(
+          (total, d) => total + Number(d.quantity),
+          0
+        ),
+      }
+    })
+    const grossweight = commodities.reduce(
+      (total, d) => total + Number(d.weight),
+      0
     )
-    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
-    return res
-      .status(200)
-      .send({ error: false, message: "Success", data: grossweight })
+    const quantity = commodities.reduce(
+      (total, d) => total + Number(d.quantity),
+      0
+    )
+    return res.status(200).send({
+      error: false,
+      message: "Success",
+      data: { quantity, weight: grossweight },
+    })
   } catch (error) {
     return res.send({ error: true, message: (error as any)?.message })
   }
@@ -348,13 +372,19 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
       }
 
       const commodities = warehouse.commodities
-      const grossweight = commodities.reduce(
+      const ntweight = commodities.reduce(
         (total, d) => total + Number(d.net_weight),
         0
       )
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: grossweight })
+      const quantity = commodities.reduce(
+        (total, d) => total + Number(d.quantity),
+        0
+      )
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: { quantity, weight: ntweight },
+      })
     }
 
     // admin users
@@ -370,16 +400,31 @@ export const countNWByWarehouse = async (req: Request, res: Response) => {
         message: "Warehouse not found",
       })
     }
-    const commodities = warehouses.map((warehouse) =>
-      warehouse.commodities.reduce(
-        (total, d) => total + Number(d.net_weight),
-        0
-      )
+    const commodities = warehouses.map((warehouse) => {
+      return {
+        weight: warehouse.commodities.reduce(
+          (total, d) => total + Number(d.net_weight),
+          0
+        ),
+        quantity: warehouse.commodities.reduce(
+          (total, d) => total + Number(d.quantity),
+          0
+        ),
+      }
+    })
+    const ntweight = commodities.reduce(
+      (total, d) => total + Number(d.weight),
+      0
     )
-    const grossweight = commodities.reduce((total, d) => total + Number(d), 0)
-    return res
-      .status(200)
-      .send({ error: false, message: "Success", data: grossweight })
+    const quantity = commodities.reduce(
+      (total, d) => total + Number(d.quantity),
+      0
+    )
+    return res.status(200).send({
+      error: false,
+      message: "Success",
+      data: { quantity, weight: ntweight },
+    })
   } catch (error) {
     return res.send({ error: true, message: (error as any)?.message })
   }
