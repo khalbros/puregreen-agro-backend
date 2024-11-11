@@ -1940,7 +1940,7 @@ export const countRecoveredCash = async (req: Request, res: Response) => {
 
       const filterDisburse = disburse?.filter(
         (disburse) =>
-          String((disburse as any)?.disbursement.warehouse) ===
+          String((disburse as any)?.disbursement?.warehouse) ===
           String(user.warehouse?._id)
       )
 
@@ -1948,6 +1948,7 @@ export const countRecoveredCash = async (req: Request, res: Response) => {
         (total, d) => total + Number(d.cash_paid),
         0
       )
+
       return res
         .status(200)
         .send({ error: false, message: "Success", data: cash })
