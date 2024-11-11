@@ -1028,9 +1028,15 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
           message: "Disbursementment not found",
         })
       }
-      return res
-        .status(200)
-        .send({ error: false, message: "Success", data: disbursement })
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: disbursement.filter(
+          (disburse) =>
+            String((disburse as any)?.disbursement?.warehouse?._id) ===
+            String(user.warehouse?._id)
+        ),
+      })
     }
     if (user?.role === "WAREHOUSE ADMIN") {
       const disbursement = await cashRepaymentModel
@@ -1054,7 +1060,15 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
       }
       return res
         .status(200)
-        .send({ error: false, message: "Success", data: disbursement })
+        .send({
+          error: false,
+          message: "Success",
+          data: disbursement.filter(
+            (disburse) =>
+              String((disburse as any)?.disbursement?.warehouse?._id) ===
+              String(user.warehouse?._id)
+          ),
+        })
     }
 
     const disbursement = project
