@@ -1058,17 +1058,15 @@ export const getAllCashLRP = async (req: Request, res: Response) => {
           message: "Disbursementment not found",
         })
       }
-      return res
-        .status(200)
-        .send({
-          error: false,
-          message: "Success",
-          data: disbursement.filter(
-            (disburse) =>
-              String((disburse as any)?.disbursement?.warehouse?._id) ===
-              String(user.warehouse?._id)
-          ),
-        })
+      return res.status(200).send({
+        error: false,
+        message: "Success",
+        data: disbursement.filter(
+          (disburse) =>
+            String((disburse as any)?.disbursement?.warehouse?._id) ===
+            String(user.warehouse?._id)
+        ),
+      })
     }
 
     const disbursement = project
