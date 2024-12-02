@@ -1257,11 +1257,11 @@ export const getAllGrainLRP = async (req: Request, res: Response) => {
 
   try {
     const userID = await currentUser(req, res)
-    const user = await userModel.findById(userID?.userId).populate("warehouse")
+    const user = await userModel.findById(userID?.userId)
     if (user?.role === "WAREHOUSE MANAGER") {
       const disbursement = await grainRepaymentModel
         .find({
-          disbursedBy: { $in: (user?.warehouse as any)?.supervisors },
+          repayedBy: user?._id,
         })
         .populate([
           "disbursement",
